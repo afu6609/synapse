@@ -12,6 +12,7 @@ public class EmbeddingConfig {
     private String provider = "siliconflow";
     private SlidingWindowConfig slidingWindow = new SlidingWindowConfig();
     private StorageConfig storage = new StorageConfig();
+    private Integer detectedDimension;
 
     public static class SiliconFlowConfig {
         private String baseUrl = "https://api.siliconflow.cn/v1";
@@ -69,4 +70,6 @@ public class EmbeddingConfig {
     public void setSlidingWindow(SlidingWindowConfig slidingWindow) { this.slidingWindow = slidingWindow; }
     public StorageConfig getStorage() { return storage; }
     public void setStorage(StorageConfig storage) { this.storage = storage; }
+    public Integer getDetectedDimension() { return detectedDimension; }
+    public void setDetectedDimension(Integer detectedDimension) { this.detectedDimension = detectedDimension; }
 }

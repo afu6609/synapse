@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class VectorStorageService {
@@ -36,6 +37,15 @@ public class VectorStorageService {
     }
 
     /**
+     * 动态更新存储基路径
+     */
+    public void updateBasePath(Path newBasePath) throws IOException {
+        Files.createDirectories(newBasePath);
+        this.basePath = newBasePath;
+        log.info("Storage base path updated to: {}", newBasePath);
+    }
+
+    /**
      * 保存向量化结果
      */
     public void saveEmbeddings(String chatId, List<EmbeddingResult> results) throws Exception {
@@ -48,8 +58,8 @@ public class VectorStorageService {
             initializeDatabase(conn);
 
             String insertSql = """
-                INSERT OR REPLACE INTO embeddings (window_id, content, message_ids, vector_file)
-                VALUES (?, ?, ?, ?)
+                INSERT OR REPLACE INTO embeddings (window_id, content, message_ids, vector_file, message_index)
+                VALUES (?, ?, ?, ?, ?)
             """;
 
             try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
@@ -63,6 +73,7 @@ public class VectorStorageService {
                     stmt.setString(2, result.content());
                     stmt.setString(3, String.join(",", result.messageIds()));
                     stmt.setString(4, vectorFile);
+                    stmt.setInt(5, result.messageIndex());
                     stmt.executeUpdate();
                 }
             }
@@ -88,7 +99,7 @@ public class VectorStorageService {
         List<SearchResult> results = new ArrayList<>();
 
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
-            String selectSql = "SELECT window_id, content, message_ids, vector_file FROM embeddings";
+            String selectSql = "SELECT window_id, content, message_ids, vector_file, message_index FROM embeddings";
 
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(selectSql)) {
@@ -98,6 +109,7 @@ public class VectorStorageService {
                     String content = rs.getString("content");
                     String messageIds = rs.getString("message_ids");
                     String vectorFile = rs.getString("vector_file");
+                    int messageIndex = rs.getInt("message_index");
 
                     List<Float> storedVector = loadVectorFromFile(chatDir.resolve(vectorFile));
                     double similarity = cosineSimilarity(queryVector, storedVector);
@@ -106,7 +118,9 @@ public class VectorStorageService {
                             windowId,
                             content,
                             similarity,
-                            Arrays.asList(messageIds.split(","))
+                            Arrays.asList(messageIds.split(",")),
+                            messageIndex,
+                            true // isMatch: 向量直接命中
                     ));
                 }
             }
@@ -115,6 +129,93 @@ public class VectorStorageService {
         // 按相似度排序，取topK
         results.sort((a, b) -> Double.compare(b.score(), a.score()));
         return results.subList(0, Math.min(topK, results.size()));
+    }
+
+    /**
+     * 搜索相似向量并附带附近消息
+     */
+    public List<SearchResult> searchWithNearby(String chatId, String query, int topK, int nearbyCount) throws Exception {
+        // 先执行普通搜索
+        List<SearchResult> matched = search(chatId, query, topK);
+
+        if (nearbyCount <= 0 || matched.isEmpty()) {
+            return matched;
+        }
+
+        int radius = nearbyCount / 2;
+        if (radius <= 0) radius = 1;
+
+        // 收集匹配的 messageIndex
+        Set<Integer> matchedIndices = matched.stream()
+                .map(SearchResult::messageIndex)
+                .collect(Collectors.toSet());
+
+        // 计算需要检索的附近下标（排除已匹配的）
+        Set<Integer> nearbyIndices = new LinkedHashSet<>();
+        for (int idx : matchedIndices) {
+            for (int offset = -radius; offset <= radius; offset++) {
+                if (offset == 0) continue;
+                int nearbyIdx = idx + offset;
+                if (nearbyIdx >= 0 && !matchedIndices.contains(nearbyIdx)) {
+                    nearbyIndices.add(nearbyIdx);
+                }
+            }
+        }
+
+        if (nearbyIndices.isEmpty()) {
+            return matched;
+        }
+
+        // 从数据库查询附近消息
+        List<SearchResult> nearbyResults = fetchByIndices(chatId, nearbyIndices);
+
+        // 合并结果，按 messageIndex 排序
+        List<SearchResult> combined = new ArrayList<>(matched);
+        combined.addAll(nearbyResults);
+        combined.sort(Comparator.comparingInt(SearchResult::messageIndex));
+
+        return combined;
+    }
+
+    /**
+     * 根据 messageIndex 集合从数据库查询
+     */
+    private List<SearchResult> fetchByIndices(String chatId, Set<Integer> indices) throws Exception {
+        Path chatDir = basePath.resolve(chatId);
+        Path dbPath = chatDir.resolve("metadata.db");
+
+        if (!Files.exists(dbPath)) {
+            return Collections.emptyList();
+        }
+
+        List<SearchResult> results = new ArrayList<>();
+
+        String placeholders = indices.stream().map(i -> "?").collect(Collectors.joining(","));
+        String sql = "SELECT window_id, content, message_ids, message_index FROM embeddings WHERE message_index IN (" + placeholders + ")";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            int paramIdx = 1;
+            for (int idx : indices) {
+                stmt.setInt(paramIdx++, idx);
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    results.add(new SearchResult(
+                            rs.getString("window_id"),
+                            rs.getString("content"),
+                            0.0, // 附近消息没有相似度分数
+                            Arrays.asList(rs.getString("message_ids").split(",")),
+                            rs.getInt("message_index"),
+                            false // isMatch=false: 附近上下文
+                    ));
+                }
+            }
+        }
+
+        return results;
     }
 
     /**
@@ -144,6 +245,7 @@ public class VectorStorageService {
                 content TEXT NOT NULL,
                 message_ids TEXT NOT NULL,
                 vector_file TEXT NOT NULL,
+                message_index INTEGER NOT NULL DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """;

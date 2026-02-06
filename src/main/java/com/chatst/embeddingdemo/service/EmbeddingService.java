@@ -7,8 +7,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,21 +24,20 @@ public class EmbeddingService {
     private static final Logger log = LoggerFactory.getLogger(EmbeddingService.class);
 
     private final EmbeddingConfig config;
-    private final WebClient webClient;
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     public EmbeddingService(EmbeddingConfig config, ObjectMapper objectMapper) {
         this.config = config;
         this.objectMapper = objectMapper;
-        this.webClient = WebClient.builder().build();
+        this.restTemplate = new RestTemplate();
     }
 
     /**
      * 创建滑动窗口并向量化
      */
-    public List<EmbeddingResult> embedWithSlidingWindow(String chatId, List<Message> messages) {
+    public List<EmbeddingResult> embedWithSlidingWindow(String chatId, List<Message> messages, int windowSize) {
         List<EmbeddingResult> results = new ArrayList<>();
-        int windowSize = config.getSlidingWindow().getSize();
         String separator = config.getSlidingWindow().getSeparator();
 
         for (int i = 0; i <= messages.size() - windowSize; i++) {
@@ -55,8 +57,27 @@ public class EmbeddingService {
             // 调用embedding API
             List<Float> vector = getEmbedding(combinedContent);
 
-            results.add(new EmbeddingResult(windowId, combinedContent, vector, messageIds));
-            log.debug("Embedded window: {} with {} dimensions", windowId, vector.size());
+            results.add(new EmbeddingResult(windowId, combinedContent, vector, messageIds, i));
+            log.debug("Embedded window: {} with {} dimensions, index: {}", windowId, vector.size(), i);
+        }
+
+        return results;
+    }
+
+    /**
+     * 逐条消息向量化（不使用滑动窗口）
+     */
+    public List<EmbeddingResult> embedIndividually(String chatId, List<Message> messages) {
+        List<EmbeddingResult> results = new ArrayList<>();
+
+        for (int i = 0; i < messages.size(); i++) {
+            Message msg = messages.get(i);
+            String content = "[" + msg.role() + "]: " + msg.content();
+
+            List<Float> vector = getEmbedding(content);
+
+            results.add(new EmbeddingResult(msg.id(), content, vector, List.of(msg.id()), i));
+            log.debug("Embedded message: {} with {} dimensions, index: {}", msg.id(), vector.size(), i);
         }
 
         return results;
@@ -81,14 +102,14 @@ public class EmbeddingService {
                 "encoding_format", "float"
         );
 
-        String response = webClient.post()
-                .uri(siliconConfig.getBaseUrl() + "/embeddings")
-                .header("Authorization", "Bearer " + siliconConfig.getApiKey())
-                .header("Content-Type", "application/json")
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + siliconConfig.getApiKey());
+
+        String response = restTemplate.postForObject(
+                siliconConfig.getBaseUrl() + "/embeddings",
+                new HttpEntity<>(requestBody, headers),
+                String.class);
 
         return parseEmbeddingResponse(response);
     }
@@ -101,13 +122,13 @@ public class EmbeddingService {
                 "input", text
         );
 
-        String response = webClient.post()
-                .uri(ollamaConfig.getBaseUrl() + "/api/embed")
-                .header("Content-Type", "application/json")
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String response = restTemplate.postForObject(
+                ollamaConfig.getBaseUrl() + "/api/embed",
+                new HttpEntity<>(requestBody, headers),
+                String.class);
 
         return parseOllamaEmbeddingResponse(response);
     }

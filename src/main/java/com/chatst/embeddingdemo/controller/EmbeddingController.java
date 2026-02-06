@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -40,17 +40,28 @@ public class EmbeddingController {
     }
 
     /**
-     * 向量化消息 (使用滑动窗口)
+     * 向量化消息 (支持滑动窗口 / 逐条)
      */
     @PostMapping("/embed")
     public ResponseEntity<List<EmbeddingResult>> embed(@RequestBody EmbeddingRequest request) {
-        log.info("Embedding request for chat: {}, messages: {}", request.chatId(), request.messages().size());
+        log.info("Embedding request for chat: {}, messages: {}, slidingWindow: {}, windowSize: {}",
+                request.chatId(), request.messages().size(), request.useSlidingWindow(), request.windowSize());
 
         try {
-            List<EmbeddingResult> results = embeddingService.embedWithSlidingWindow(
-                    request.chatId(),
-                    request.messages()
-            );
+            List<EmbeddingResult> results;
+
+            if (request.useSlidingWindow()) {
+                results = embeddingService.embedWithSlidingWindow(
+                        request.chatId(),
+                        request.messages(),
+                        request.windowSize()
+                );
+            } else {
+                results = embeddingService.embedIndividually(
+                        request.chatId(),
+                        request.messages()
+                );
+            }
 
             // 保存到存储
             storageService.saveEmbeddings(request.chatId(), results);
@@ -81,23 +92,64 @@ public class EmbeddingController {
     }
 
     /**
-     * 搜索相似内容
+     * 搜索相似内容 (支持附近消息检索)
      */
     @PostMapping("/search")
     public ResponseEntity<List<SearchResult>> search(@RequestBody SearchRequest request) {
-        log.info("Search request for chat: {}, query: {}", request.chatId(), request.query());
+        log.info("Search request for chat: {}, query: {}, nearbyCount: {}",
+                request.chatId(), request.query(), request.nearbyCount());
 
         try {
-            List<SearchResult> results = storageService.search(
-                    request.chatId(),
-                    request.query(),
-                    request.topK() * 2  // 如果要rerank，先多取一些
-            );
+            List<SearchResult> results;
 
-            if (request.useRerank() && !results.isEmpty()) {
-                results = rerankService.rerank(request.query(), results, request.topK());
+            if (request.nearbyCount() > 0) {
+                // 附近消息检索模式
+                int searchTopK = request.useRerank() ? request.topK() * 2 : request.topK();
+                results = storageService.searchWithNearby(
+                        request.chatId(),
+                        request.query(),
+                        searchTopK,
+                        request.nearbyCount()
+                );
+
+                if (request.useRerank() && !results.isEmpty()) {
+                    // 只对 isMatch=true 的结果做 rerank
+                    List<SearchResult> matched = results.stream().filter(SearchResult::isMatch).toList();
+                    List<SearchResult> nearby = results.stream().filter(r -> !r.isMatch()).toList();
+
+                    matched = rerankService.rerank(request.query(), matched, request.topK());
+
+                    // 重新收集 rerank 后的匹配下标，过滤附近消息
+                    var rerankedIndices = matched.stream()
+                            .map(SearchResult::messageIndex)
+                            .collect(Collectors.toSet());
+                    int radius = request.nearbyCount() / 2;
+                    if (radius <= 0) radius = 1;
+                    final int r = radius;
+                    nearby = nearby.stream().filter(n -> {
+                        for (int idx : rerankedIndices) {
+                            if (Math.abs(n.messageIndex() - idx) <= r) return true;
+                        }
+                        return false;
+                    }).toList();
+
+                    results = new ArrayList<>(matched);
+                    results.addAll(nearby);
+                    results.sort(Comparator.comparingInt(SearchResult::messageIndex));
+                }
             } else {
-                results = results.subList(0, Math.min(request.topK(), results.size()));
+                // 普通搜索模式
+                results = storageService.search(
+                        request.chatId(),
+                        request.query(),
+                        request.useRerank() ? request.topK() * 2 : request.topK()
+                );
+
+                if (request.useRerank() && !results.isEmpty()) {
+                    results = rerankService.rerank(request.query(), results, request.topK());
+                } else {
+                    results = results.subList(0, Math.min(request.topK(), results.size()));
+                }
             }
 
             return ResponseEntity.ok(results);

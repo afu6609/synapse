@@ -6,8 +6,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
@@ -17,13 +20,13 @@ public class RerankService {
     private static final Logger log = LoggerFactory.getLogger(RerankService.class);
 
     private final EmbeddingConfig config;
-    private final WebClient webClient;
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     public RerankService(EmbeddingConfig config, ObjectMapper objectMapper) {
         this.config = config;
         this.objectMapper = objectMapper;
-        this.webClient = WebClient.builder().build();
+        this.restTemplate = new RestTemplate();
     }
 
     /**
@@ -49,14 +52,14 @@ public class RerankService {
         );
 
         try {
-            String response = webClient.post()
-                    .uri(siliconConfig.getBaseUrl() + "/rerank")
-                    .header("Authorization", "Bearer " + siliconConfig.getApiKey())
-                    .header("Content-Type", "application/json")
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + siliconConfig.getApiKey());
+
+            String response = restTemplate.postForObject(
+                    siliconConfig.getBaseUrl() + "/rerank",
+                    new HttpEntity<>(requestBody, headers),
+                    String.class);
 
             return parseRerankResponse(response, candidates);
         } catch (Exception e) {
@@ -80,7 +83,9 @@ public class RerankService {
                         original.windowId(),
                         original.content(),
                         score,
-                        original.messageIds()
+                        original.messageIds(),
+                        original.messageIndex(),
+                        original.isMatch()
                 ));
             }
 
