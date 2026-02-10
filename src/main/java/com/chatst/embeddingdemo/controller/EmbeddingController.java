@@ -1,5 +1,6 @@
 package com.chatst.embeddingdemo.controller;
 
+import com.chatst.embeddingdemo.config.EmbeddingConfig;
 import com.chatst.embeddingdemo.model.*;
 import com.chatst.embeddingdemo.service.EmbeddingService;
 import com.chatst.embeddingdemo.service.RerankService;
@@ -22,28 +23,29 @@ public class EmbeddingController {
     private final EmbeddingService embeddingService;
     private final RerankService rerankService;
     private final VectorStorageService storageService;
+    private final EmbeddingConfig config;
 
     public EmbeddingController(EmbeddingService embeddingService,
                                RerankService rerankService,
-                               VectorStorageService storageService) {
+                               VectorStorageService storageService,
+                               EmbeddingConfig config) {
         this.embeddingService = embeddingService;
         this.rerankService = rerankService;
         this.storageService = storageService;
+        this.config = config;
     }
 
-    /**
-     * 健康检查
-     */
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
         return ResponseEntity.ok(Map.of("status", "ok", "service", "embedding-service"));
     }
 
-    /**
-     * 向量化消息 (支持滑动窗口 / 逐条)
-     */
     @PostMapping("/embed")
-    public ResponseEntity<List<EmbeddingResult>> embed(@RequestBody EmbeddingRequest request) {
+    public ResponseEntity<?> embed(@RequestBody EmbeddingRequest request) {
+        if (!config.getProvider().isConfigured()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Embedding provider is not configured"));
+        }
+
         log.info("Embedding request for chat: {}, messages: {}, slidingWindow: {}, windowSize: {}",
                 request.chatId(), request.messages().size(), request.useSlidingWindow(), request.windowSize());
 
@@ -63,7 +65,6 @@ public class EmbeddingController {
                 );
             }
 
-            // 保存到存储
             storageService.saveEmbeddings(request.chatId(), results);
 
             return ResponseEntity.ok(results);
@@ -73,11 +74,12 @@ public class EmbeddingController {
         }
     }
 
-    /**
-     * 单条文本向量化 (不保存)
-     */
     @PostMapping("/embed/text")
     public ResponseEntity<Map<String, Object>> embedText(@RequestBody Map<String, String> request) {
+        if (!config.getProvider().isConfigured()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Embedding provider is not configured"));
+        }
+
         String text = request.get("text");
         if (text == null || text.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "text is required"));
@@ -91,11 +93,12 @@ public class EmbeddingController {
         ));
     }
 
-    /**
-     * 搜索相似内容 (支持附近消息检索)
-     */
     @PostMapping("/search")
-    public ResponseEntity<List<SearchResult>> search(@RequestBody SearchRequest request) {
+    public ResponseEntity<?> search(@RequestBody SearchRequest request) {
+        if (!config.getProvider().isConfigured()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Embedding provider is not configured"));
+        }
+
         log.info("Search request for chat: {}, query: {}, nearbyCount: {}",
                 request.chatId(), request.query(), request.nearbyCount());
 
@@ -103,7 +106,6 @@ public class EmbeddingController {
             List<SearchResult> results;
 
             if (request.nearbyCount() > 0) {
-                // 附近消息检索模式
                 int searchTopK = request.useRerank() ? request.topK() * 2 : request.topK();
                 results = storageService.searchWithNearby(
                         request.chatId(),
@@ -113,13 +115,11 @@ public class EmbeddingController {
                 );
 
                 if (request.useRerank() && !results.isEmpty()) {
-                    // 只对 isMatch=true 的结果做 rerank
                     List<SearchResult> matched = results.stream().filter(SearchResult::isMatch).toList();
                     List<SearchResult> nearby = results.stream().filter(r -> !r.isMatch()).toList();
 
                     matched = rerankService.rerank(request.query(), matched, request.topK());
 
-                    // 重新收集 rerank 后的匹配下标，过滤附近消息
                     var rerankedIndices = matched.stream()
                             .map(SearchResult::messageIndex)
                             .collect(Collectors.toSet());
@@ -138,7 +138,6 @@ public class EmbeddingController {
                     results.sort(Comparator.comparingInt(SearchResult::messageIndex));
                 }
             } else {
-                // 普通搜索模式
                 results = storageService.search(
                         request.chatId(),
                         request.query(),
@@ -159,9 +158,6 @@ public class EmbeddingController {
         }
     }
 
-    /**
-     * 删除聊天的向量数据
-     */
     @DeleteMapping("/chat/{chatId}")
     public ResponseEntity<Map<String, String>> deleteChat(@PathVariable String chatId) {
         try {

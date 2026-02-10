@@ -18,7 +18,7 @@ public class ConfigService {
     private final EmbeddingConfig config;
     private final EmbeddingService embeddingService;
     private final VectorStorageService vectorStorageService;
-    private final ApplicationEventPublisher eventPublisher;  // 改用事件发布
+    private final ApplicationEventPublisher eventPublisher;
 
     public ConfigService(EmbeddingConfig config,
                          EmbeddingService embeddingService,
@@ -30,24 +30,20 @@ public class ConfigService {
         this.eventPublisher = eventPublisher;
     }
 
-    /**
-     * 返回当前配置快照（API Key 脱敏）
-     */
     public Map<String, Object> getConfigSnapshot() {
         Map<String, Object> snapshot = new LinkedHashMap<>();
-        snapshot.put("provider", config.getProvider());
 
-        // SiliconFlow
-        snapshot.put("siliconflow.baseUrl", config.getSiliconflow().getBaseUrl());
-        snapshot.put("siliconflow.apiKey", maskApiKey(config.getSiliconflow().getApiKey()));
-        snapshot.put("siliconflow.embeddingModel", config.getSiliconflow().getEmbeddingModel());
-        snapshot.put("siliconflow.rerankModel", config.getSiliconflow().getRerankModel());
+        // Embedding provider
+        snapshot.put("provider.baseUrl", config.getProvider().getBaseUrl());
+        snapshot.put("provider.model", config.getProvider().getModel());
+        snapshot.put("provider.apiKey", maskApiKey(config.getProvider().getApiKey()));
 
-        // Ollama
-        snapshot.put("ollama.baseUrl", config.getOllama().getBaseUrl());
-        snapshot.put("ollama.embeddingModel", config.getOllama().getEmbeddingModel());
+        // Rerank provider
+        snapshot.put("rerank.baseUrl", config.getRerank().getBaseUrl());
+        snapshot.put("rerank.model", config.getRerank().getModel());
+        snapshot.put("rerank.apiKey", maskApiKey(config.getRerank().getApiKey()));
 
-        // Sliding Window - 装箱为 Integer
+        // Sliding Window
         snapshot.put("slidingWindow.size", Integer.valueOf(config.getSlidingWindow().getSize()));
         snapshot.put("slidingWindow.separator", config.getSlidingWindow().getSeparator());
 
@@ -61,12 +57,9 @@ public class ConfigService {
         return snapshot;
     }
 
-    /**
-     * 部分更新配置，返回变更的字段列表
-     */
-    public List<String> applyConfigUpdate(Map<String, Object> updates) {
+    public synchronized List<String> applyConfigUpdate(Map<String, Object> updates) {
         List<String> changedFields = new ArrayList<>();
-        boolean modelOrUrlChanged = false;
+        boolean providerChanged = false;
         boolean storagePathChanged = false;
 
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
@@ -75,8 +68,8 @@ public class ConfigService {
             boolean changed = applyField(key, value);
             if (changed) {
                 changedFields.add(key);
-                if (isModelOrUrlField(key)) {
-                    modelOrUrlChanged = true;
+                if (isProviderField(key)) {
+                    providerChanged = true;
                 }
                 if ("storage.basePath".equals(key)) {
                     storagePathChanged = true;
@@ -88,8 +81,8 @@ public class ConfigService {
             return changedFields;
         }
 
-        // 模型/URL 变更 → 自动检测维度
-        if (modelOrUrlChanged) {
+        // Provider changes → auto-detect dimension
+        if (providerChanged && config.getProvider().isConfigured()) {
             try {
                 detectDimension();
             } catch (Exception e) {
@@ -97,7 +90,7 @@ public class ConfigService {
             }
         }
 
-        // 存储路径变更 → 刷新 VectorStorageService
+        // Storage path changed → refresh VectorStorageService
         if (storagePathChanged) {
             try {
                 refreshStoragePath();
@@ -106,16 +99,12 @@ public class ConfigService {
             }
         }
 
-        // 广播配置变更
         broadcastConfigChange(changedFields);
 
         log.info("Config updated, changed fields: {}", changedFields);
         return changedFields;
     }
 
-    /**
-     * 手动触发维度检测
-     */
     public Integer detectDimension() {
         try {
             List<Float> testVector = embeddingService.getEmbedding("test");
@@ -132,55 +121,51 @@ public class ConfigService {
     private boolean applyField(String key, Object value) {
         String strVal = value != null ? value.toString() : null;
         return switch (key) {
-            case "provider" -> {
-                if (!Objects.equals(config.getProvider(), strVal)) {
-                    config.setProvider(strVal);
+            // Embedding provider
+            case "provider.baseUrl" -> {
+                if (!Objects.equals(config.getProvider().getBaseUrl(), strVal)) {
+                    config.getProvider().setBaseUrl(strVal);
                     yield true;
                 }
                 yield false;
             }
-            case "siliconflow.baseUrl" -> {
-                if (!Objects.equals(config.getSiliconflow().getBaseUrl(), strVal)) {
-                    config.getSiliconflow().setBaseUrl(strVal);
+            case "provider.model" -> {
+                if (!Objects.equals(config.getProvider().getModel(), strVal)) {
+                    config.getProvider().setModel(strVal);
                     yield true;
                 }
                 yield false;
             }
-            case "siliconflow.apiKey" -> {
-                if (!Objects.equals(config.getSiliconflow().getApiKey(), strVal)) {
-                    config.getSiliconflow().setApiKey(strVal);
+            case "provider.apiKey" -> {
+                if (!Objects.equals(config.getProvider().getApiKey(), strVal)) {
+                    config.getProvider().setApiKey(strVal);
                     yield true;
                 }
                 yield false;
             }
-            case "siliconflow.embeddingModel" -> {
-                if (!Objects.equals(config.getSiliconflow().getEmbeddingModel(), strVal)) {
-                    config.getSiliconflow().setEmbeddingModel(strVal);
+            // Rerank provider
+            case "rerank.baseUrl" -> {
+                if (!Objects.equals(config.getRerank().getBaseUrl(), strVal)) {
+                    config.getRerank().setBaseUrl(strVal);
                     yield true;
                 }
                 yield false;
             }
-            case "siliconflow.rerankModel" -> {
-                if (!Objects.equals(config.getSiliconflow().getRerankModel(), strVal)) {
-                    config.getSiliconflow().setRerankModel(strVal);
+            case "rerank.model" -> {
+                if (!Objects.equals(config.getRerank().getModel(), strVal)) {
+                    config.getRerank().setModel(strVal);
                     yield true;
                 }
                 yield false;
             }
-            case "ollama.baseUrl" -> {
-                if (!Objects.equals(config.getOllama().getBaseUrl(), strVal)) {
-                    config.getOllama().setBaseUrl(strVal);
+            case "rerank.apiKey" -> {
+                if (!Objects.equals(config.getRerank().getApiKey(), strVal)) {
+                    config.getRerank().setApiKey(strVal);
                     yield true;
                 }
                 yield false;
             }
-            case "ollama.embeddingModel" -> {
-                if (!Objects.equals(config.getOllama().getEmbeddingModel(), strVal)) {
-                    config.getOllama().setEmbeddingModel(strVal);
-                    yield true;
-                }
-                yield false;
-            }
+            // Sliding window
             case "slidingWindow.size" -> {
                 int intVal = value instanceof Number n ? n.intValue() : Integer.parseInt(strVal);
                 if (config.getSlidingWindow().getSize() != intVal) {
@@ -196,6 +181,7 @@ public class ConfigService {
                 }
                 yield false;
             }
+            // Storage
             case "storage.basePath" -> {
                 if (!Objects.equals(config.getStorage().getBasePath(), strVal)) {
                     config.getStorage().setBasePath(strVal);
@@ -217,12 +203,9 @@ public class ConfigService {
         };
     }
 
-    private boolean isModelOrUrlField(String key) {
-        return key.equals("provider")
-                || key.equals("siliconflow.baseUrl")
-                || key.equals("siliconflow.embeddingModel")
-                || key.equals("ollama.baseUrl")
-                || key.equals("ollama.embeddingModel");
+    private boolean isProviderField(String key) {
+        return key.equals("provider.baseUrl")
+                || key.equals("provider.model");
     }
 
     private void refreshStoragePath() throws Exception {

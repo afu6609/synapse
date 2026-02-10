@@ -6,31 +6,20 @@ spring:
     name: embedding-service
   threads:
     virtual:
-      enabled: true  # 启用虚拟线程
+      enabled: true
 
 # Embedding服务配置
 embedding:
-  # 硅基流动配置
-  siliconflow:
-    base-url: https://api.siliconflow.cn/v1
-    api-key: ${SILICONFLOW_API_KEY:sk-wfxeduzlnxjrlyftegmcspjehnywlyfxqpgijtpdedytexlo}
-    embedding-model: Qwen/Qwen3-Embedding-8B
-    rerank-model: Qwen/Qwen3-Reranker-8B
-
-  # Ollama本地配置 (备用)
-  ollama:
-    base-url: http://localhost:11434
-    embedding-model: dengcao/Qwen3-Embedding-4B:Q4_K_M
-
-  # 当前使用的提供商: siliconflow 或 ollama
-  provider: ollama
-
   # 滑动窗口配置
   sliding-window:
-    size: 2  # 窗口大小，2表示每次取2条消息组合
-    separator: "\n---\n"  # 消息之间的分隔符
+    size: 2
+    separator: "\n---\n"
 
   # 存储配置
   storage:
     base-path: ./data/embedding-service
     vector-file-suffix: .vec
+
+  # Provider 和 Rerank 通过运行时 API 配置:
+  #   provider.type / provider.baseUrl / provider.model / provider.apiKey
+  #   rerank.type / rerank.baseUrl / rerank.model / rerank.apiKey

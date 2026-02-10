@@ -1,6 +1,6 @@
 package com.chatst.embeddingdemo.websocket;
 
-import com.chatst.embeddingdemo.event.ConfigChangedEvent;
+import com.chatst.embeddingdemo.config.EmbeddingConfig;
 import com.chatst.embeddingdemo.model.*;
 import com.chatst.embeddingdemo.service.ConfigService;
 import com.chatst.embeddingdemo.service.EmbeddingService;
@@ -14,10 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import org.springframework.context.event.EventListener;
-import com.chatst.embeddingdemo.event.ConfigChangedEvent;
-import java.util.LinkedHashMap;
 
 import java.io.IOException;
 import java.util.*;
@@ -29,11 +27,15 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(EmbeddingWebSocketHandler.class);
 
+    private static final int SEND_TIME_LIMIT = 5000;   // 5s
+    private static final int BUFFER_SIZE_LIMIT = 512 * 1024; // 512KB
+
     private final ObjectMapper objectMapper;
     private final EmbeddingService embeddingService;
     private final RerankService rerankService;
     private final VectorStorageService storageService;
     private final ConfigService configService;
+    private final EmbeddingConfig config;
 
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
@@ -41,29 +43,22 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                                      EmbeddingService embeddingService,
                                      RerankService rerankService,
                                      VectorStorageService storageService,
-                                     ConfigService configService) {  // 移除 @Lazy
+                                     ConfigService configService,
+                                     EmbeddingConfig config) {
         this.objectMapper = objectMapper;
         this.embeddingService = embeddingService;
         this.rerankService = rerankService;
         this.storageService = storageService;
         this.configService = configService;
-    }
-
-    // 添加事件监听
-    @EventListener
-    public void onConfigChanged(ConfigChangedEvent event) {
-        Map<String, Object> message = new LinkedHashMap<>();
-        message.put("type", "config_changed");
-        message.put("changedFields", event.getChangedFields());
-        message.put("config", event.getConfigSnapshot());
-        broadcast(message);
+        this.config = config;
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        sessions.put(session.getId(), session);
+        WebSocketSession decorated = new ConcurrentWebSocketSessionDecorator(session, SEND_TIME_LIMIT, BUFFER_SIZE_LIMIT);
+        sessions.put(session.getId(), decorated);
         log.info("WebSocket connected: {}", session.getId());
-        sendMessage(session, Map.of("type", "connected", "sessionId", session.getId()));
+        sendMessage(decorated, Map.of("type", "connected", "sessionId", session.getId()));
     }
 
     @Override
@@ -74,25 +69,36 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+        // Look up the decorated session for sending
+        WebSocketSession decorated = sessions.get(session.getId());
+        if (decorated == null) {
+            decorated = session;
+        }
+
         try {
             JsonNode request = objectMapper.readTree(message.getPayload());
             String action = request.path("action").asText();
 
             switch (action) {
-                case "embed" -> handleEmbed(session, request);
-                case "search" -> handleSearch(session, request);
-                case "delete" -> handleDelete(session, request);
-                case "config" -> handleConfig(session, request);
-                case "ping" -> sendMessage(session, Map.of("type", "pong"));
-                default -> sendError(session, "Unknown action: " + action);
+                case "embed" -> handleEmbed(decorated, request);
+                case "search" -> handleSearch(decorated, request);
+                case "delete" -> handleDelete(decorated, request);
+                case "config" -> handleConfig(decorated, request);
+                case "ping" -> sendMessage(decorated, Map.of("type", "pong"));
+                default -> sendError(decorated, "Unknown action: " + action);
             }
         } catch (Exception e) {
             log.error("Error handling message", e);
-            sendError(session, e.getMessage());
+            sendError(decorated, e.getMessage());
         }
     }
 
     private void handleEmbed(WebSocketSession session, JsonNode request) throws Exception {
+        if (!config.getProvider().isConfigured()) {
+            sendError(session, "Embedding provider is not configured. Please set provider.baseUrl and provider.model first.");
+            return;
+        }
+
         String chatId = request.path("chatId").asText();
         boolean useSlidingWindow = request.path("useSlidingWindow").asBoolean(false);
         int windowSize = request.path("windowSize").asInt(2);
@@ -100,7 +106,6 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
         List<Message> messages = objectMapper.readerForListOf(Message.class).readValue(messagesNode);
 
-        // 发送开始通知
         sendMessage(session, Map.of(
                 "type", "progress",
                 "action", "embed",
@@ -117,7 +122,6 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
         storageService.saveEmbeddings(chatId, results);
 
-        // 发送完成通知
         sendMessage(session, Map.of(
                 "type", "result",
                 "action", "embed",
@@ -127,6 +131,11 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleSearch(WebSocketSession session, JsonNode request) throws Exception {
+        if (!config.getProvider().isConfigured()) {
+            sendError(session, "Embedding provider is not configured. Please set provider.baseUrl and provider.model first.");
+            return;
+        }
+
         String chatId = request.path("chatId").asText();
         String query = request.path("query").asText();
         int topK = request.path("topK").asInt(5);
@@ -142,13 +151,17 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
         }
 
         if (useRerank && !results.isEmpty()) {
+            if (!config.getRerank().isConfigured()) {
+                sendError(session, "Rerank provider is not configured. Please set rerank.baseUrl and rerank.model first.");
+                return;
+            }
+
             List<SearchResult> matched = results.stream().filter(SearchResult::isMatch).toList();
             List<SearchResult> nearby = results.stream().filter(r -> !r.isMatch()).toList();
 
             matched = rerankService.rerank(query, matched, topK);
 
             if (!nearby.isEmpty()) {
-                // 修复：显式转换为 Integer
                 Set<Integer> rerankedIndices = matched.stream()
                         .map(r -> Integer.valueOf(r.messageIndex()))
                         .collect(Collectors.toSet());
@@ -203,6 +216,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
             ));
             case "update" -> {
                 JsonNode dataNode = request.path("data");
+                @SuppressWarnings("unchecked")
                 Map<String, Object> updates = objectMapper.convertValue(dataNode, Map.class);
                 List<String> changedFields = configService.applyConfigUpdate(updates);
                 sendMessage(session, Map.of(
@@ -230,7 +244,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * 向所有已连接客户端广播消息
+     * Broadcast a message to all connected WS clients (thread-safe via ConcurrentWebSocketSessionDecorator).
      */
     public void broadcast(Object data) {
         String json;

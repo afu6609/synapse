@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(del \"C:\\\\Users\\\\Haa\\\\Desktop\\\\project\\\\embeddingDemo\\\\src\\\\main\\\\resources\\\\application.properties\")",
+      "Bash(mvn compile:*)",
+      "WebSearch",
+      "Bash(mvn help:effective-pom:*)",
+      "Bash(findstr:*)",
+      "Bash(del:*)"
+    ]
+  }
+}

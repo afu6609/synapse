@@ -31,7 +31,12 @@ public class VectorStorageService {
 
     @PostConstruct
     public void init() throws IOException {
-        basePath = Path.of(config.getStorage().getBasePath());
+        String configuredPath = config.getStorage().getBasePath();
+        if (configuredPath == null || configuredPath.isBlank()) {
+            log.warn("Storage base path is not configured, using default: ./data/embedding-service");
+            configuredPath = "./data/embedding-service";
+        }
+        basePath = Path.of(configuredPath);
         Files.createDirectories(basePath);
         log.info("Vector storage initialized at: {}", basePath);
     }

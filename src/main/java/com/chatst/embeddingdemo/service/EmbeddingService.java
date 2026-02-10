@@ -27,15 +27,12 @@ public class EmbeddingService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    public EmbeddingService(EmbeddingConfig config, ObjectMapper objectMapper) {
+    public EmbeddingService(EmbeddingConfig config, ObjectMapper objectMapper, RestTemplate restTemplate) {
         this.config = config;
         this.objectMapper = objectMapper;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
-    /**
-     * 创建滑动窗口并向量化
-     */
     public List<EmbeddingResult> embedWithSlidingWindow(String chatId, List<Message> messages, int windowSize) {
         List<EmbeddingResult> results = new ArrayList<>();
         String separator = config.getSlidingWindow().getSeparator();
@@ -43,7 +40,6 @@ public class EmbeddingService {
         for (int i = 0; i <= messages.size() - windowSize; i++) {
             List<Message> window = messages.subList(i, i + windowSize);
 
-            // 组合窗口内的消息
             String combinedContent = window.stream()
                     .map(m -> "[" + m.role() + "]: " + m.content())
                     .collect(Collectors.joining(separator));
@@ -54,7 +50,6 @@ public class EmbeddingService {
 
             String windowId = String.join("_", messageIds);
 
-            // 调用embedding API
             List<Float> vector = getEmbedding(combinedContent);
 
             results.add(new EmbeddingResult(windowId, combinedContent, vector, messageIds, i));
@@ -64,9 +59,6 @@ public class EmbeddingService {
         return results;
     }
 
-    /**
-     * 逐条消息向量化（不使用滑动窗口）
-     */
     public List<EmbeddingResult> embedIndividually(String chatId, List<Message> messages) {
         List<EmbeddingResult> results = new ArrayList<>();
 
@@ -83,54 +75,30 @@ public class EmbeddingService {
         return results;
     }
 
-    /**
-     * 单条文本向量化
-     */
     public List<Float> getEmbedding(String text) {
-        return switch (config.getProvider()) {
-            case "ollama" -> getOllamaEmbedding(text);
-            default -> getSiliconFlowEmbedding(text);
-        };
-    }
-
-    private List<Float> getSiliconFlowEmbedding(String text) {
-        var siliconConfig = config.getSiliconflow();
+        var provider = config.getProvider();
+        if (!provider.isConfigured()) {
+            throw new IllegalStateException("Embedding provider is not configured");
+        }
 
         Map<String, Object> requestBody = Map.of(
-                "model", siliconConfig.getEmbeddingModel(),
+                "model", provider.getModel(),
                 "input", text,
                 "encoding_format", "float"
         );
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + siliconConfig.getApiKey());
+        if (provider.getApiKey() != null && !provider.getApiKey().isBlank()) {
+            headers.set("Authorization", "Bearer " + provider.getApiKey());
+        }
 
         String response = restTemplate.postForObject(
-                siliconConfig.getBaseUrl() + "/embeddings",
+                provider.getBaseUrl() + "/embeddings",
                 new HttpEntity<>(requestBody, headers),
                 String.class);
 
         return parseEmbeddingResponse(response);
-    }
-
-    private List<Float> getOllamaEmbedding(String text) {
-        var ollamaConfig = config.getOllama();
-
-        Map<String, Object> requestBody = Map.of(
-                "model", ollamaConfig.getEmbeddingModel(),
-                "input", text
-        );
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        String response = restTemplate.postForObject(
-                ollamaConfig.getBaseUrl() + "/api/embed",
-                new HttpEntity<>(requestBody, headers),
-                String.class);
-
-        return parseOllamaEmbeddingResponse(response);
     }
 
     private List<Float> parseEmbeddingResponse(String response) {
@@ -145,21 +113,6 @@ public class EmbeddingService {
         } catch (Exception e) {
             log.error("Failed to parse embedding response: {}", response, e);
             throw new RuntimeException("Failed to parse embedding response", e);
-        }
-    }
-
-    private List<Float> parseOllamaEmbeddingResponse(String response) {
-        try {
-            JsonNode root = objectMapper.readTree(response);
-            JsonNode embeddings = root.path("embeddings").get(0);
-            List<Float> result = new ArrayList<>();
-            for (JsonNode node : embeddings) {
-                result.add(node.floatValue());
-            }
-            return result;
-        } catch (Exception e) {
-            log.error("Failed to parse Ollama embedding response: {}", response, e);
-            throw new RuntimeException("Failed to parse Ollama embedding response", e);
         }
     }
 }

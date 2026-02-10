@@ -7,37 +7,33 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "embedding")
 public class EmbeddingConfig {
 
-    private SiliconFlowConfig siliconflow = new SiliconFlowConfig();
-    private OllamaConfig ollama = new OllamaConfig();
-    private String provider = "siliconflow";
+    private ProviderConfig provider = new ProviderConfig();
+    private ProviderConfig rerank = new ProviderConfig();
     private SlidingWindowConfig slidingWindow = new SlidingWindowConfig();
     private StorageConfig storage = new StorageConfig();
     private Integer detectedDimension;
 
-    public static class SiliconFlowConfig {
-        private String baseUrl = "https://api.siliconflow.cn/v1";
+    /**
+     * Unified provider config — used for both embedding and reranking.
+     * All providers use OpenAI-compatible API format.
+     * For Ollama, set baseUrl to http://localhost:11434/v1.
+     */
+    public static class ProviderConfig {
+        private String baseUrl;
+        private String model;
         private String apiKey;
-        private String embeddingModel = "Qwen/Qwen3-Embedding-8B";
-        private String rerankModel = "Qwen/Qwen3-Reranker-8B";
+
+        public boolean isConfigured() {
+            return baseUrl != null && !baseUrl.isBlank()
+                    && model != null && !model.isBlank();
+        }
 
         public String getBaseUrl() { return baseUrl; }
         public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
+        public String getModel() { return model; }
+        public void setModel(String model) { this.model = model; }
         public String getApiKey() { return apiKey; }
         public void setApiKey(String apiKey) { this.apiKey = apiKey; }
-        public String getEmbeddingModel() { return embeddingModel; }
-        public void setEmbeddingModel(String embeddingModel) { this.embeddingModel = embeddingModel; }
-        public String getRerankModel() { return rerankModel; }
-        public void setRerankModel(String rerankModel) { this.rerankModel = rerankModel; }
-    }
-
-    public static class OllamaConfig {
-        private String baseUrl = "http://localhost:11434";
-        private String embeddingModel = "qwen3-embedding-4b";
-
-        public String getBaseUrl() { return baseUrl; }
-        public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
-        public String getEmbeddingModel() { return embeddingModel; }
-        public void setEmbeddingModel(String embeddingModel) { this.embeddingModel = embeddingModel; }
     }
 
     public static class SlidingWindowConfig {
@@ -60,12 +56,10 @@ public class EmbeddingConfig {
         public void setVectorFileSuffix(String vectorFileSuffix) { this.vectorFileSuffix = vectorFileSuffix; }
     }
 
-    public SiliconFlowConfig getSiliconflow() { return siliconflow; }
-    public void setSiliconflow(SiliconFlowConfig siliconflow) { this.siliconflow = siliconflow; }
-    public OllamaConfig getOllama() { return ollama; }
-    public void setOllama(OllamaConfig ollama) { this.ollama = ollama; }
-    public String getProvider() { return provider; }
-    public void setProvider(String provider) { this.provider = provider; }
+    public ProviderConfig getProvider() { return provider; }
+    public void setProvider(ProviderConfig provider) { this.provider = provider; }
+    public ProviderConfig getRerank() { return rerank; }
+    public void setRerank(ProviderConfig rerank) { this.rerank = rerank; }
     public SlidingWindowConfig getSlidingWindow() { return slidingWindow; }
     public void setSlidingWindow(SlidingWindowConfig slidingWindow) { this.slidingWindow = slidingWindow; }
     public StorageConfig getStorage() { return storage; }
