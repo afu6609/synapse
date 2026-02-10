@@ -1,11 +1,11 @@
 package com.chatst.embeddingdemo.service;
 
 import com.chatst.embeddingdemo.config.EmbeddingConfig;
-import com.chatst.embeddingdemo.websocket.EmbeddingWebSocketHandler;
+import com.chatst.embeddingdemo.event.ConfigChangedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -18,16 +18,16 @@ public class ConfigService {
     private final EmbeddingConfig config;
     private final EmbeddingService embeddingService;
     private final VectorStorageService vectorStorageService;
-    private final EmbeddingWebSocketHandler webSocketHandler;
+    private final ApplicationEventPublisher eventPublisher;  // 改用事件发布
 
     public ConfigService(EmbeddingConfig config,
                          EmbeddingService embeddingService,
                          VectorStorageService vectorStorageService,
-                         @Lazy EmbeddingWebSocketHandler webSocketHandler) {
+                         ApplicationEventPublisher eventPublisher) {
         this.config = config;
         this.embeddingService = embeddingService;
         this.vectorStorageService = vectorStorageService;
-        this.webSocketHandler = webSocketHandler;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -47,8 +47,8 @@ public class ConfigService {
         snapshot.put("ollama.baseUrl", config.getOllama().getBaseUrl());
         snapshot.put("ollama.embeddingModel", config.getOllama().getEmbeddingModel());
 
-        // Sliding Window
-        snapshot.put("slidingWindow.size", config.getSlidingWindow().getSize());
+        // Sliding Window - 装箱为 Integer
+        snapshot.put("slidingWindow.size", Integer.valueOf(config.getSlidingWindow().getSize()));
         snapshot.put("slidingWindow.separator", config.getSlidingWindow().getSeparator());
 
         // Storage
@@ -119,7 +119,7 @@ public class ConfigService {
     public Integer detectDimension() {
         try {
             List<Float> testVector = embeddingService.getEmbedding("test");
-            int dimension = testVector.size();
+            Integer dimension = Integer.valueOf(testVector.size());
             config.setDetectedDimension(dimension);
             log.info("Detected embedding dimension: {}", dimension);
             return dimension;
@@ -231,11 +231,7 @@ public class ConfigService {
     }
 
     private void broadcastConfigChange(List<String> changedFields) {
-        Map<String, Object> message = new LinkedHashMap<>();
-        message.put("type", "config_changed");
-        message.put("changedFields", changedFields);
-        message.put("config", getConfigSnapshot());
-        webSocketHandler.broadcast(message);
+        eventPublisher.publishEvent(new ConfigChangedEvent(this, changedFields, getConfigSnapshot()));
     }
 
     private String maskApiKey(String apiKey) {

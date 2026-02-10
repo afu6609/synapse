@@ -1,5 +1,6 @@
 package com.chatst.embeddingdemo.websocket;
 
+import com.chatst.embeddingdemo.event.ConfigChangedEvent;
 import com.chatst.embeddingdemo.model.*;
 import com.chatst.embeddingdemo.service.ConfigService;
 import com.chatst.embeddingdemo.service.EmbeddingService;
@@ -9,12 +10,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.context.event.EventListener;
+import com.chatst.embeddingdemo.event.ConfigChangedEvent;
+import java.util.LinkedHashMap;
 
 import java.io.IOException;
 import java.util.*;
@@ -35,15 +38,25 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     public EmbeddingWebSocketHandler(ObjectMapper objectMapper,
-                                      EmbeddingService embeddingService,
-                                      RerankService rerankService,
-                                      VectorStorageService storageService,
-                                      @Lazy ConfigService configService) {
+                                     EmbeddingService embeddingService,
+                                     RerankService rerankService,
+                                     VectorStorageService storageService,
+                                     ConfigService configService) {  // 移除 @Lazy
         this.objectMapper = objectMapper;
         this.embeddingService = embeddingService;
         this.rerankService = rerankService;
         this.storageService = storageService;
         this.configService = configService;
+    }
+
+    // 添加事件监听
+    @EventListener
+    public void onConfigChanged(ConfigChangedEvent event) {
+        Map<String, Object> message = new LinkedHashMap<>();
+        message.put("type", "config_changed");
+        message.put("changedFields", event.getChangedFields());
+        message.put("config", event.getConfigSnapshot());
+        broadcast(message);
     }
 
     @Override
@@ -135,14 +148,16 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
             matched = rerankService.rerank(query, matched, topK);
 
             if (!nearby.isEmpty()) {
-                var rerankedIndices = matched.stream()
-                        .map(SearchResult::messageIndex)
+                // 修复：显式转换为 Integer
+                Set<Integer> rerankedIndices = matched.stream()
+                        .map(r -> Integer.valueOf(r.messageIndex()))
                         .collect(Collectors.toSet());
+
                 int radius = nearbyCount / 2;
                 if (radius <= 0) radius = 1;
                 final int r = radius;
                 nearby = nearby.stream().filter(n -> {
-                    for (int idx : rerankedIndices) {
+                    for (Integer idx : rerankedIndices) {
                         if (Math.abs(n.messageIndex() - idx) <= r) return true;
                     }
                     return false;
