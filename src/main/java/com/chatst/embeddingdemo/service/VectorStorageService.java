@@ -140,9 +140,14 @@ public class VectorStorageService {
      * 搜索相似向量并附带附近消息
      */
     public List<SearchResult> searchWithNearby(String chatId, String query, int topK, int nearbyCount) throws Exception {
-        // 先执行普通搜索
         List<SearchResult> matched = search(chatId, query, topK);
+        return addNearby(chatId, matched, nearbyCount);
+    }
 
+    /**
+     * 给已有的搜索结果添加附近上下文消息
+     */
+    public List<SearchResult> addNearby(String chatId, List<SearchResult> matched, int nearbyCount) throws Exception {
         if (nearbyCount <= 0 || matched.isEmpty()) {
             return matched;
         }
@@ -150,12 +155,10 @@ public class VectorStorageService {
         int radius = nearbyCount / 2;
         if (radius <= 0) radius = 1;
 
-        // 收集匹配的 messageIndex
         Set<Integer> matchedIndices = matched.stream()
                 .map(SearchResult::messageIndex)
                 .collect(Collectors.toSet());
 
-        // 计算需要检索的附近下标（排除已匹配的）
         Set<Integer> nearbyIndices = new LinkedHashSet<>();
         for (int idx : matchedIndices) {
             for (int offset = -radius; offset <= radius; offset++) {
@@ -171,10 +174,8 @@ public class VectorStorageService {
             return matched;
         }
 
-        // 从数据库查询附近消息
         List<SearchResult> nearbyResults = fetchByIndices(chatId, nearbyIndices);
 
-        // 合并结果，按 messageIndex 排序
         List<SearchResult> combined = new ArrayList<>(matched);
         combined.addAll(nearbyResults);
         combined.sort(Comparator.comparingInt(SearchResult::messageIndex));
