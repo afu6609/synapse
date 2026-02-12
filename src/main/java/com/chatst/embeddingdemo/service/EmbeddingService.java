@@ -5,6 +5,8 @@ import com.chatst.embeddingdemo.model.EmbeddingResult;
 import com.chatst.embeddingdemo.model.Message;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.embedding.onnx.bgesmallzhv15.BgeSmallZhV15EmbeddingModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -26,6 +28,9 @@ public class EmbeddingService {
     private final EmbeddingConfig config;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+
+    private volatile EmbeddingModel localModel;
+    private volatile String localModelName;
 
     public EmbeddingService(EmbeddingConfig config, ObjectMapper objectMapper, RestTemplate restTemplate) {
         this.config = config;
@@ -204,6 +209,10 @@ public class EmbeddingService {
             throw new IllegalStateException("Embedding provider is not configured");
         }
 
+        if ("local".equals(provider.getType())) {
+            return getLocalEmbedding(text, provider.getModel());
+        }
+
         Map<String, Object> requestBody = Map.of(
                 "model", provider.getModel(),
                 "input", text,
@@ -222,6 +231,38 @@ public class EmbeddingService {
                 String.class);
 
         return parseEmbeddingResponse(response);
+    }
+
+    private List<Float> getLocalEmbedding(String text, String modelName) {
+        EmbeddingModel model = getOrCreateLocalModel(modelName);
+        float[] vector = model.embed(text).content().vector();
+        List<Float> result = new ArrayList<>(vector.length);
+        for (float v : vector) {
+            result.add(v);
+        }
+        return result;
+    }
+
+    private EmbeddingModel getOrCreateLocalModel(String modelName) {
+        if (localModel != null && modelName.equals(localModelName)) {
+            return localModel;
+        }
+        synchronized (this) {
+            if (localModel != null && modelName.equals(localModelName)) {
+                return localModel;
+            }
+            localModel = createLocalModel(modelName);
+            localModelName = modelName;
+            return localModel;
+        }
+    }
+
+    private EmbeddingModel createLocalModel(String modelName) {
+        log.info("Loading local embedding model: {}", modelName);
+        return switch (modelName) {
+            case "bge-small-zh-v15" -> new BgeSmallZhV15EmbeddingModel();
+            default -> throw new IllegalArgumentException("Unknown local model: " + modelName);
+        };
     }
 
     private List<Float> parseEmbeddingResponse(String response) {

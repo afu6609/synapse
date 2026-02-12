@@ -1,6 +1,6 @@
 # Embedding Service
 
-基于 Spring Boot 4.0.2 的向量嵌入服务，支持所有 OpenAI 兼容 API 的 Embedding/Rerank 提供商（Ollama、SiliconFlow、OpenAI、Jina 等），所有配置均可运行时动态修改。提供 REST API 和 WebSocket 双协议接口。支持 GraalVM native image 编译。
+基于 Spring Boot 4.0.2 的向量嵌入服务，支持所有 OpenAI 兼容 API 的 Embedding/Rerank 提供商（Ollama、SiliconFlow、OpenAI、Jina 等），也支持本地 ONNX 嵌入模型（无需外部服务）。所有配置均可运行时动态修改。提供 REST API 和 WebSocket 双协议接口。支持 GraalVM native image 编译。
 
 **服务端口**: `23456`
 
@@ -74,6 +74,37 @@ curl -X PATCH http://localhost:23456/api/v1/config \
   }'
 ```
 
+### 配置本地嵌入模型（无需外部服务）
+
+内置 ONNX 本地嵌入模型，无需运行 Ollama 或其他外部 API 即可生成向量。
+
+```bash
+curl -X PATCH http://localhost:23456/api/v1/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider.type": "local",
+    "provider.model": "bge-small-zh-v15"
+  }'
+```
+
+支持的本地模型：
+
+| 模型标识 | 说明 | 维度 |
+|----------|------|------|
+| `bge-small-zh-v15` | BGE Small Chinese v1.5（ONNX） | 512 |
+
+切回 API 模式：
+
+```bash
+curl -X PATCH http://localhost:23456/api/v1/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider.type": "api",
+    "provider.baseUrl": "http://localhost:11434/v1",
+    "provider.model": "qwen3-embedding-4b"
+  }'
+```
+
 配置完成后即可使用 embed/search 接口。维度会在 provider 配置变更时自动检测。
 
 ---
@@ -128,8 +159,9 @@ java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/
 
 | Key | 类型 | 说明 |
 |-----|------|------|
-| `provider.baseUrl` | string | Embedding API 地址（如 `http://localhost:11434/v1`） |
-| `provider.model` | string | Embedding 模型名 |
+| `provider.type` | string | 提供商类型：`api`（默认，外部 HTTP API）或 `local`（本地 ONNX 模型） |
+| `provider.baseUrl` | string | Embedding API 地址（如 `http://localhost:11434/v1`），`local` 模式不需要 |
+| `provider.model` | string | Embedding 模型名（`local` 模式下为本地模型标识，如 `bge-small-zh-v15`） |
 | `provider.apiKey` | string | Embedding API 密钥（可选，无密钥时不传即可） |
 | `rerank.baseUrl` | string | Rerank API 地址 |
 | `rerank.model` | string | Rerank 模型名 |
@@ -145,7 +177,7 @@ java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/
 
 | 变更字段 | 自动触发 |
 |----------|----------|
-| `provider.baseUrl`、`provider.model` | 自动检测 Embedding 维度 |
+| `provider.type`、`provider.baseUrl`、`provider.model` | 自动检测 Embedding 维度 |
 | `storage.basePath` | 刷新存储路径 |
 | 任意字段变更 | WebSocket 广播 `config_changed` 事件 |
 

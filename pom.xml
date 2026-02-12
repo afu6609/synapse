@@ -55,6 +55,13 @@
             <version>3.49.1.0</version>
         </dependency>
 
+        <!-- 本地 ONNX 嵌入模型（纯 Java，不依赖 Spring） -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings-bge-small-zh-v15</artifactId>
+            <version>0.36.2</version>
+        </dependency>
+
         <!-- Lombok (减少样板代码) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -85,6 +92,7 @@
                     <buildArgs>
                         <arg>--gc=parallel</arg>
                         <arg>-Djava.awt.headless=true</arg>
+                        <arg>-H:+AddAllCharsets</arg>
                     </buildArgs>
                 </configuration>
             </plugin>

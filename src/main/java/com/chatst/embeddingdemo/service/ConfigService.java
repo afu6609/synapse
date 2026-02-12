@@ -34,6 +34,7 @@ public class ConfigService {
         Map<String, Object> snapshot = new LinkedHashMap<>();
 
         // Embedding provider
+        snapshot.put("provider.type", config.getProvider().getType());
         snapshot.put("provider.baseUrl", config.getProvider().getBaseUrl());
         snapshot.put("provider.model", config.getProvider().getModel());
         snapshot.put("provider.apiKey", maskApiKey(config.getProvider().getApiKey()));
@@ -126,6 +127,13 @@ public class ConfigService {
         String strVal = value != null ? value.toString() : null;
         return switch (key) {
             // Embedding provider
+            case "provider.type" -> {
+                if (!Objects.equals(config.getProvider().getType(), strVal)) {
+                    config.getProvider().setType(strVal);
+                    yield true;
+                }
+                yield false;
+            }
             case "provider.baseUrl" -> {
                 if (!Objects.equals(config.getProvider().getBaseUrl(), strVal)) {
                     config.getProvider().setBaseUrl(strVal);
@@ -225,7 +233,8 @@ public class ConfigService {
     }
 
     private boolean isProviderField(String key) {
-        return key.equals("provider.baseUrl")
+        return key.equals("provider.type")
+                || key.equals("provider.baseUrl")
                 || key.equals("provider.model");
     }
 

@@ -20,15 +20,21 @@ public class EmbeddingConfig {
      * For Ollama, set baseUrl to http://localhost:11434/v1.
      */
     public static class ProviderConfig {
+        private String type = "api"; // "api"（默认，外部HTTP）或 "local"（本地ONNX模型）
         private String baseUrl;
         private String model;
         private String apiKey;
 
         public boolean isConfigured() {
+            if ("local".equals(type)) {
+                return model != null && !model.isBlank();
+            }
             return baseUrl != null && !baseUrl.isBlank()
                     && model != null && !model.isBlank();
         }
 
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
         public String getBaseUrl() { return baseUrl; }
         public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
         public String getModel() { return model; }

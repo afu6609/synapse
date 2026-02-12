@@ -81,7 +81,7 @@ embeddingDemo/
 #### `EmbeddingConfig.java`
 - **作用**: 核心配置类，管理 embedding 和 rerank 提供商配置
 - **关键类**:
-  - `ProviderConfig`: 统一的提供商配置（baseUrl, model, apiKey）
+  - `ProviderConfig`: 统一的提供商配置（type, baseUrl, model, apiKey），type 支持 `api`（外部HTTP）和 `local`（本地ONNX模型）
   - `SlidingWindowConfig`: 滑动窗口配置（windowSize, overlapRatio, enableNearby, nearbyCount）
   - `ChunkConfig`: 长消息分块配置（enabled, maxLength）
   - `StorageConfig`: SQLite 存储路径配置
@@ -183,7 +183,8 @@ embeddingDemo/
 ### 5. 服务层 (service/)
 
 #### `EmbeddingService.java`
-- **作用**: 调用 embedding 提供商 API 生成向量
+- **作用**: 调用 embedding 提供商 API 或本地 ONNX 模型生成向量
+- **本地模型支持**: `provider.type=local` 时使用 langchain4j ONNX 嵌入模型（如 `bge-small-zh-v15`），无需外部服务
 - **核心机制 — 长消息分块（Chunking）**:
   - `chunkMessages()`: 将消息列表转为 chunk 列表
     - 短消息（≤ maxLength）：整条存为一个 chunk
@@ -379,7 +380,7 @@ mvn -Pnative native:compile
 
 ## 设计亮点
 
-1. **统一 OpenAI-compatible 格式**: Ollama/SiliconFlow/任意兼容提供商均使用相同接口
+1. **统一 OpenAI-compatible 格式**: Ollama/SiliconFlow/任意兼容提供商均使用相同接口；也支持本地 ONNX 模型（无需外部服务）
 2. **动态配置**: 运行时切换 embedding/rerank 提供商，实时生效
 3. **长消息分块**: 自动切分长回复，附带用户问题锚点，滑窗和 nearby 在 chunk 级别无缝运行
 4. **正确的搜索流程**: rerank 在附近消息之前执行，避免上下文丢失
