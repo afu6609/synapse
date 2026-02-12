@@ -134,6 +134,8 @@ java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/
 | `rerank.baseUrl` | string | Rerank API 地址 |
 | `rerank.model` | string | Rerank 模型名 |
 | `rerank.apiKey` | string | Rerank API 密钥（可选） |
+| `chunk.enabled` | boolean | 是否启用长消息分块（默认 `true`） |
+| `chunk.maxLength` | int | 触发分块的字符数阈值（默认 `512`） |
 | `slidingWindow.size` | int | 滑动窗口大小（默认 2） |
 | `slidingWindow.separator` | string | 消息分隔符（默认 `\n---\n`） |
 | `storage.basePath` | string | 向量存储路径（默认 `./data/embedding-service`） |
@@ -161,6 +163,9 @@ spring:
       enabled: true
 
 embedding:
+  chunk:
+    enabled: true
+    max-length: 512
   sliding-window:
     size: 2
     separator: "\n---\n"
@@ -168,6 +173,40 @@ embedding:
     base-path: ./data/embedding-service
     vector-file-suffix: .vec
 ```
+
+---
+
+## 长消息分块（Chunking）
+
+当消息内容超过 `chunk.maxLength`（默认 512 字符）时，自动按段落切分为多个 chunk，每个 chunk 独立向量化。
+
+### 分块规则
+
+1. **短消息**（≤ maxLength）：整条存为一个 chunk，格式 `[role]: content`
+2. **长消息**：按 `\n\n` 段落切分 → 合并小段落 → 超长段落按 `\n` 二次切分 → 仍超长则硬切
+3. **上下文锚点**：assistant 回复的 chunk 自动附带最近 user 问题（截取前 200 字）作为锚点
+
+### 示例
+
+输入 4 条消息（msg1 为长回复）：
+```
+msg0 (user): "量子计算是什么？"
+msg1 (assistant): "[1500字长回复，3个段落]"
+msg2 (user): "有什么应用？"
+msg3 (assistant): "[100字短回复]"
+```
+
+分块结果（maxLength=512）：
+```
+chunk 0: "[user]: 量子计算是什么？"
+chunk 1: "[Question]: 量子计算是什么？\n---\n[assistant]: 段落1..."
+chunk 2: "[Question]: 量子计算是什么？\n---\n[assistant]: 段落2..."
+chunk 3: "[Question]: 量子计算是什么？\n---\n[assistant]: 段落3..."
+chunk 4: "[user]: 有什么应用？"
+chunk 5: "[assistant]: 短回复内容"
+```
+
+滑动窗口和 nearby 搜索均在 chunk 级别操作，逻辑不变。设置 `chunk.enabled=false` 可禁用分块，退化为原始行为。
 
 ---
 
@@ -346,6 +385,8 @@ GET /api/v1/config
   "rerank.baseUrl": null,
   "rerank.model": null,
   "rerank.apiKey": "****",
+  "chunk.enabled": true,
+  "chunk.maxLength": 512,
   "slidingWindow.size": 2,
   "slidingWindow.separator": "\n---\n",
   "storage.basePath": "./data/embedding-service",

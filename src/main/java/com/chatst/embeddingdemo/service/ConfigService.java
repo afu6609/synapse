@@ -51,6 +51,10 @@ public class ConfigService {
         snapshot.put("storage.basePath", config.getStorage().getBasePath());
         snapshot.put("storage.vectorFileSuffix", config.getStorage().getVectorFileSuffix());
 
+        // Chunk
+        snapshot.put("chunk.enabled", Boolean.valueOf(config.getChunk().isEnabled()));
+        snapshot.put("chunk.maxLength", Integer.valueOf(config.getChunk().getMaxLength()));
+
         // Detected dimension
         snapshot.put("detectedDimension", config.getDetectedDimension());
 
@@ -192,6 +196,23 @@ public class ConfigService {
             case "storage.vectorFileSuffix" -> {
                 if (!Objects.equals(config.getStorage().getVectorFileSuffix(), strVal)) {
                     config.getStorage().setVectorFileSuffix(strVal);
+                    yield true;
+                }
+                yield false;
+            }
+            // Chunk
+            case "chunk.enabled" -> {
+                boolean boolVal = value instanceof Boolean b ? b : Boolean.parseBoolean(strVal);
+                if (config.getChunk().isEnabled() != boolVal) {
+                    config.getChunk().setEnabled(boolVal);
+                    yield true;
+                }
+                yield false;
+            }
+            case "chunk.maxLength" -> {
+                int intVal = value instanceof Number n ? n.intValue() : Integer.parseInt(strVal);
+                if (config.getChunk().getMaxLength() != intVal) {
+                    config.getChunk().setMaxLength(intVal);
                     yield true;
                 }
                 yield false;

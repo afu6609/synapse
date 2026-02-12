@@ -11,6 +11,7 @@ public class EmbeddingConfig {
     private ProviderConfig rerank = new ProviderConfig();
     private SlidingWindowConfig slidingWindow = new SlidingWindowConfig();
     private StorageConfig storage = new StorageConfig();
+    private ChunkConfig chunk = new ChunkConfig();
     private Integer detectedDimension;
 
     /**
@@ -56,6 +57,16 @@ public class EmbeddingConfig {
         public void setVectorFileSuffix(String vectorFileSuffix) { this.vectorFileSuffix = vectorFileSuffix; }
     }
 
+    public static class ChunkConfig {
+        private boolean enabled = true;
+        private int maxLength = 512;
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+        public int getMaxLength() { return maxLength; }
+        public void setMaxLength(int maxLength) { this.maxLength = maxLength; }
+    }
+
     public ProviderConfig getProvider() { return provider; }
     public void setProvider(ProviderConfig provider) { this.provider = provider; }
     public ProviderConfig getRerank() { return rerank; }
@@ -64,6 +75,8 @@ public class EmbeddingConfig {
     public void setSlidingWindow(SlidingWindowConfig slidingWindow) { this.slidingWindow = slidingWindow; }
     public StorageConfig getStorage() { return storage; }
     public void setStorage(StorageConfig storage) { this.storage = storage; }
+    public ChunkConfig getChunk() { return chunk; }
+    public void setChunk(ChunkConfig chunk) { this.chunk = chunk; }
     public Integer getDetectedDimension() { return detectedDimension; }
     public void setDetectedDimension(Integer detectedDimension) { this.detectedDimension = detectedDimension; }
 }

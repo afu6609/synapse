@@ -10,6 +10,11 @@ spring:
 
 # Embedding服务配置
 embedding:
+  # 分块配置
+  chunk:
+    enabled: true
+    max-length: 512
+
   # 滑动窗口配置
   sliding-window:
     size: 2
