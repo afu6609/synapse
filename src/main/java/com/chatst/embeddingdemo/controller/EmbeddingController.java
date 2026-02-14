@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -105,50 +104,24 @@ public class EmbeddingController {
         try {
             List<SearchResult> results;
 
-            if (request.nearbyCount() > 0) {
-                int searchTopK = request.useRerank() ? request.topK() * 2 : request.topK();
-                results = storageService.searchWithNearby(
-                        request.chatId(),
-                        request.query(),
-                        searchTopK,
-                        request.nearbyCount()
-                );
+            if (request.useRerank()) {
+                // search → rerank → addNearby
+                results = storageService.search(request.chatId(), request.query(), request.topK() * 2);
 
-                if (request.useRerank() && !results.isEmpty()) {
-                    List<SearchResult> matched = results.stream().filter(SearchResult::isMatch).toList();
-                    List<SearchResult> nearby = results.stream().filter(r -> !r.isMatch()).toList();
-
-                    matched = rerankService.rerank(request.query(), matched, request.topK());
-
-                    var rerankedIndices = matched.stream()
-                            .map(SearchResult::messageIndex)
-                            .collect(Collectors.toSet());
-                    int radius = request.nearbyCount() / 2;
-                    if (radius <= 0) radius = 1;
-                    final int r = radius;
-                    nearby = nearby.stream().filter(n -> {
-                        for (int idx : rerankedIndices) {
-                            if (Math.abs(n.messageIndex() - idx) <= r) return true;
-                        }
-                        return false;
-                    }).toList();
-
-                    results = new ArrayList<>(matched);
-                    results.addAll(nearby);
-                    results.sort(Comparator.comparingInt(SearchResult::messageIndex));
-                }
-            } else {
-                results = storageService.search(
-                        request.chatId(),
-                        request.query(),
-                        request.useRerank() ? request.topK() * 2 : request.topK()
-                );
-
-                if (request.useRerank() && !results.isEmpty()) {
+                if (!results.isEmpty()) {
+                    if (!config.getRerank().isConfigured()) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "Rerank provider is not configured"));
+                    }
                     results = rerankService.rerank(request.query(), results, request.topK());
-                } else {
-                    results = results.subList(0, Math.min(request.topK(), results.size()));
                 }
+
+                if (request.nearbyCount() > 0) {
+                    results = storageService.addNearby(request.chatId(), results, request.nearbyCount());
+                }
+            } else if (request.nearbyCount() > 0) {
+                results = storageService.searchWithNearby(request.chatId(), request.query(), request.topK(), request.nearbyCount());
+            } else {
+                results = storageService.search(request.chatId(), request.query(), request.topK());
             }
 
             return ResponseEntity.ok(results);

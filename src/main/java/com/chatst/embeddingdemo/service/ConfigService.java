@@ -34,6 +34,7 @@ public class ConfigService {
         Map<String, Object> snapshot = new LinkedHashMap<>();
 
         // Embedding provider
+        snapshot.put("provider.type", config.getProvider().getType());
         snapshot.put("provider.baseUrl", config.getProvider().getBaseUrl());
         snapshot.put("provider.model", config.getProvider().getModel());
         snapshot.put("provider.apiKey", maskApiKey(config.getProvider().getApiKey()));
@@ -50,6 +51,10 @@ public class ConfigService {
         // Storage
         snapshot.put("storage.basePath", config.getStorage().getBasePath());
         snapshot.put("storage.vectorFileSuffix", config.getStorage().getVectorFileSuffix());
+
+        // Chunk
+        snapshot.put("chunk.enabled", Boolean.valueOf(config.getChunk().isEnabled()));
+        snapshot.put("chunk.maxLength", Integer.valueOf(config.getChunk().getMaxLength()));
 
         // Detected dimension
         snapshot.put("detectedDimension", config.getDetectedDimension());
@@ -122,6 +127,13 @@ public class ConfigService {
         String strVal = value != null ? value.toString() : null;
         return switch (key) {
             // Embedding provider
+            case "provider.type" -> {
+                if (!Objects.equals(config.getProvider().getType(), strVal)) {
+                    config.getProvider().setType(strVal);
+                    yield true;
+                }
+                yield false;
+            }
             case "provider.baseUrl" -> {
                 if (!Objects.equals(config.getProvider().getBaseUrl(), strVal)) {
                     config.getProvider().setBaseUrl(strVal);
@@ -196,6 +208,23 @@ public class ConfigService {
                 }
                 yield false;
             }
+            // Chunk
+            case "chunk.enabled" -> {
+                boolean boolVal = value instanceof Boolean b ? b : Boolean.parseBoolean(strVal);
+                if (config.getChunk().isEnabled() != boolVal) {
+                    config.getChunk().setEnabled(boolVal);
+                    yield true;
+                }
+                yield false;
+            }
+            case "chunk.maxLength" -> {
+                int intVal = value instanceof Number n ? n.intValue() : Integer.parseInt(strVal);
+                if (config.getChunk().getMaxLength() != intVal) {
+                    config.getChunk().setMaxLength(intVal);
+                    yield true;
+                }
+                yield false;
+            }
             default -> {
                 log.warn("Unknown config key: {}", key);
                 yield false;
@@ -204,7 +233,8 @@ public class ConfigService {
     }
 
     private boolean isProviderField(String key) {
-        return key.equals("provider.baseUrl")
+        return key.equals("provider.type")
+                || key.equals("provider.baseUrl")
                 || key.equals("provider.model");
     }
 

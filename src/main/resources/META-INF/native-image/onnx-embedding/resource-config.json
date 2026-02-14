@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": "\\Qbge-small-zh-v1.5.onnx\\E"},
+      {"pattern": "\\Qbge-small-zh-v1.5-tokenizer.json\\E"},
+      {"pattern": "ai/onnxruntime/native/.*"},
+      {"pattern": "native/lib/.*"}
+    ]
+  }
+}

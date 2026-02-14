@@ -20,7 +20,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Component
 public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
@@ -144,46 +143,25 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
         List<SearchResult> results;
 
-        if (nearbyCount > 0) {
+        if (useRerank) {
+            // search → rerank → addNearby
+            results = storageService.search(chatId, query, topK * 2);
+
+            if (!results.isEmpty()) {
+                if (!config.getRerank().isConfigured()) {
+                    sendError(session, "Rerank provider is not configured. Please set rerank.baseUrl and rerank.model first.");
+                    return;
+                }
+                results = rerankService.rerank(query, results, topK);
+            }
+
+            if (nearbyCount > 0) {
+                results = storageService.addNearby(chatId, results, nearbyCount);
+            }
+        } else if (nearbyCount > 0) {
             results = storageService.searchWithNearby(chatId, query, topK, nearbyCount);
         } else {
-            results = storageService.search(chatId, query, topK * 2);
-        }
-
-        if (useRerank && !results.isEmpty()) {
-            if (!config.getRerank().isConfigured()) {
-                sendError(session, "Rerank provider is not configured. Please set rerank.baseUrl and rerank.model first.");
-                return;
-            }
-
-            List<SearchResult> matched = results.stream().filter(SearchResult::isMatch).toList();
-            List<SearchResult> nearby = results.stream().filter(r -> !r.isMatch()).toList();
-
-            matched = rerankService.rerank(query, matched, topK);
-
-            if (!nearby.isEmpty()) {
-                Set<Integer> rerankedIndices = matched.stream()
-                        .map(r -> Integer.valueOf(r.messageIndex()))
-                        .collect(Collectors.toSet());
-
-                int radius = nearbyCount / 2;
-                if (radius <= 0) radius = 1;
-                final int r = radius;
-                nearby = nearby.stream().filter(n -> {
-                    for (Integer idx : rerankedIndices) {
-                        if (Math.abs(n.messageIndex() - idx) <= r) return true;
-                    }
-                    return false;
-                }).toList();
-
-                results = new ArrayList<>(matched);
-                results.addAll(nearby);
-                results.sort(Comparator.comparingInt(SearchResult::messageIndex));
-            } else {
-                results = matched;
-            }
-        } else if (nearbyCount <= 0) {
-            results = results.subList(0, Math.min(topK, results.size()));
+            results = storageService.search(chatId, query, topK);
         }
 
         sendMessage(session, Map.of(

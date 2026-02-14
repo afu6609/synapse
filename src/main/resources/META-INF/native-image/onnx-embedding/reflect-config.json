@@ -1,0 +1,43 @@
+[
+  {
+    "name": "dev.langchain4j.model.embedding.onnx.bgesmallzhv15.BgeSmallZhV15EmbeddingModel",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "dev.langchain4j.model.embedding.onnx.AbstractInProcessEmbeddingModel",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "dev.langchain4j.model.embedding.onnx.OnnxBertBiEncoder",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "dev.langchain4j.model.embedding.onnx.HuggingFaceTokenizer",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "dev.langchain4j.model.embedding.onnx.BertTokenizer",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "dev.langchain4j.model.embedding.onnx.PoolingMode",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "dev.langchain4j.model.embedding.onnx.OnnxEmbeddingModel",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  }
+]
