@@ -85,6 +85,7 @@
                     <buildArgs>
                         <arg>--gc=parallel</arg>
                         <arg>-Djava.awt.headless=true</arg>
+                        <buildArg>-march=compatibility</buildArg>
                     </buildArgs>
                 </configuration>
             </plugin>
