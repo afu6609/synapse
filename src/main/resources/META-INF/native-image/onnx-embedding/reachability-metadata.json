@@ -1,4 +1,4 @@
-﻿{
+{
   "reflection": [
     {
       "type": "ai.djl.huggingface.tokenizers.jni.CharSpan",
