@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.config;
+package com.synapse.embedding.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.service;
+package com.synapse.embedding.service;
 
 import com.synapse.embedding.config.EmbeddingConfig;
 import com.synapse.embedding.model.GraphAssociation;

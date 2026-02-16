@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.model;
+package com.synapse.embedding.model;
 
 import java.util.List;
 

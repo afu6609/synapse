@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding;
+package com.synapse.embedding;
 
 import com.synapse.embedding.model.*;
 import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;

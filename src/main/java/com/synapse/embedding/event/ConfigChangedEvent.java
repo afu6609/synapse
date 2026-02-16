@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.event;
+package com.synapse.embedding.event;
 
 import org.springframework.context.ApplicationEvent;
 import java.util.List;

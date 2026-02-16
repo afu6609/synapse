@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.listener;
+package com.synapse.embedding.listener;
 
 import com.synapse.embedding.event.ConfigChangedEvent;
 import com.synapse.embedding.websocket.EmbeddingWebSocketHandler;

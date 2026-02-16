@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.controller;
+package com.synapse.embedding.controller;
 
 import com.synapse.embedding.config.EmbeddingConfig;
 import com.synapse.embedding.model.*;

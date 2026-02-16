@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.config;
+package com.synapse.embedding.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

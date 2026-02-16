@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.controller;
+package com.synapse.embedding.controller;
 
 import com.synapse.embedding.service.ConfigService;
 import org.springframework.http.ResponseEntity;

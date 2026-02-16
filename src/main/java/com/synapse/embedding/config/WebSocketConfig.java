@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.config;
+package com.synapse.embedding.config;
 
 import com.synapse.embedding.websocket.EmbeddingWebSocketHandler;
 import org.springframework.context.annotation.Configuration;

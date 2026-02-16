@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.model;
+package com.synapse.embedding.model;
 
 /**
  * 向量搜索请求

@@ -1,4 +1,4 @@
-﻿package com.synapse.embedding.model;
+package com.synapse.embedding.model;
 
 /**
  * 聊天消息
