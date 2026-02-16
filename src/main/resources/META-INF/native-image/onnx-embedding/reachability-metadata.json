@@ -1,4 +1,4 @@
-{
+﻿{
   "reflection": [
     {
       "type": "ai.djl.huggingface.tokenizers.jni.CharSpan",
@@ -76,7 +76,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.EmbeddingDemoApplication",
+      "type": "com.synapse.embedding.SynapseApplication",
       "methods": [
         {
           "name": "<init>",
@@ -91,10 +91,10 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.AsyncConfig"
+      "type": "com.synapse.embedding.config.AsyncConfig"
     },
     {
-      "type": "com.chatst.embeddingdemo.config.AsyncConfig$$SpringCGLIB$$0",
+      "type": "com.synapse.embedding.config.AsyncConfig$$SpringCGLIB$$0",
       "fields": [
         {
           "name": "$$beanFactory"
@@ -120,7 +120,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.EmbeddingConfig",
+      "type": "com.synapse.embedding.config.EmbeddingConfig",
       "methods": [
         {
           "name": "getChunk",
@@ -137,25 +137,25 @@
         {
           "name": "setChunk",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.config.EmbeddingConfig$ChunkConfig"
+            "com.synapse.embedding.config.EmbeddingConfig$ChunkConfig"
           ]
         },
         {
           "name": "setSlidingWindow",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.config.EmbeddingConfig$SlidingWindowConfig"
+            "com.synapse.embedding.config.EmbeddingConfig$SlidingWindowConfig"
           ]
         },
         {
           "name": "setStorage",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.config.EmbeddingConfig$StorageConfig"
+            "com.synapse.embedding.config.EmbeddingConfig$StorageConfig"
           ]
         }
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.EmbeddingConfig$$SpringCGLIB$$0",
+      "type": "com.synapse.embedding.config.EmbeddingConfig$$SpringCGLIB$$0",
       "fields": [
         {
           "name": "$$beanFactory"
@@ -181,7 +181,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.EmbeddingConfig$ChunkConfig",
+      "type": "com.synapse.embedding.config.EmbeddingConfig$ChunkConfig",
       "methods": [
         {
           "name": "setEnabled",
@@ -198,7 +198,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.EmbeddingConfig$SlidingWindowConfig",
+      "type": "com.synapse.embedding.config.EmbeddingConfig$SlidingWindowConfig",
       "methods": [
         {
           "name": "setSeparator",
@@ -215,7 +215,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.EmbeddingConfig$StorageConfig",
+      "type": "com.synapse.embedding.config.EmbeddingConfig$StorageConfig",
       "methods": [
         {
           "name": "setBasePath",
@@ -232,7 +232,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.HttpClientConfig",
+      "type": "com.synapse.embedding.config.HttpClientConfig",
       "methods": [
         {
           "name": "restTemplate",
@@ -241,7 +241,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.HttpClientConfig$$SpringCGLIB$$0",
+      "type": "com.synapse.embedding.config.HttpClientConfig$$SpringCGLIB$$0",
       "fields": [
         {
           "name": "$$beanFactory"
@@ -267,7 +267,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.HttpClientConfig$$SpringCGLIB$$FastClass$$0",
+      "type": "com.synapse.embedding.config.HttpClientConfig$$SpringCGLIB$$FastClass$$0",
       "methods": [
         {
           "name": "<init>",
@@ -278,7 +278,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.HttpClientConfig$$SpringCGLIB$$FastClass$$1",
+      "type": "com.synapse.embedding.config.HttpClientConfig$$SpringCGLIB$$FastClass$$1",
       "methods": [
         {
           "name": "<init>",
@@ -289,7 +289,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.JacksonConfig",
+      "type": "com.synapse.embedding.config.JacksonConfig",
       "methods": [
         {
           "name": "objectMapper",
@@ -298,7 +298,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.JacksonConfig$$SpringCGLIB$$0",
+      "type": "com.synapse.embedding.config.JacksonConfig$$SpringCGLIB$$0",
       "fields": [
         {
           "name": "$$beanFactory"
@@ -324,7 +324,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.JacksonConfig$$SpringCGLIB$$FastClass$$0",
+      "type": "com.synapse.embedding.config.JacksonConfig$$SpringCGLIB$$FastClass$$0",
       "methods": [
         {
           "name": "<init>",
@@ -335,7 +335,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.JacksonConfig$$SpringCGLIB$$FastClass$$1",
+      "type": "com.synapse.embedding.config.JacksonConfig$$SpringCGLIB$$FastClass$$1",
       "methods": [
         {
           "name": "<init>",
@@ -346,10 +346,10 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.config.WebSocketConfig"
+      "type": "com.synapse.embedding.config.WebSocketConfig"
     },
     {
-      "type": "com.chatst.embeddingdemo.config.WebSocketConfig$$SpringCGLIB$$0",
+      "type": "com.synapse.embedding.config.WebSocketConfig$$SpringCGLIB$$0",
       "fields": [
         {
           "name": "$$beanFactory"
@@ -365,7 +365,7 @@
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.websocket.EmbeddingWebSocketHandler"
+            "com.synapse.embedding.websocket.EmbeddingWebSocketHandler"
           ]
         },
         {
@@ -377,12 +377,12 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.controller.ConfigController",
+      "type": "com.synapse.embedding.controller.ConfigController",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.service.ConfigService"
+            "com.synapse.embedding.service.ConfigService"
           ]
         },
         {
@@ -394,15 +394,15 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.controller.EmbeddingController",
+      "type": "com.synapse.embedding.controller.EmbeddingController",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.service.EmbeddingService",
-            "com.chatst.embeddingdemo.service.RerankService",
-            "com.chatst.embeddingdemo.service.VectorStorageService",
-            "com.chatst.embeddingdemo.config.EmbeddingConfig"
+            "com.synapse.embedding.service.EmbeddingService",
+            "com.synapse.embedding.service.RerankService",
+            "com.synapse.embedding.service.VectorStorageService",
+            "com.synapse.embedding.config.EmbeddingConfig"
           ]
         },
         {
@@ -414,7 +414,7 @@
         {
           "name": "embed",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.model.EmbeddingRequest"
+            "com.synapse.embedding.model.EmbeddingRequest"
           ]
         },
         {
@@ -426,30 +426,30 @@
         {
           "name": "search",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.model.SearchRequest"
+            "com.synapse.embedding.model.SearchRequest"
           ]
         }
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.listener.ConfigChangeBroadcaster",
+      "type": "com.synapse.embedding.listener.ConfigChangeBroadcaster",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.websocket.EmbeddingWebSocketHandler"
+            "com.synapse.embedding.websocket.EmbeddingWebSocketHandler"
           ]
         },
         {
           "name": "onConfigChanged",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.event.ConfigChangedEvent"
+            "com.synapse.embedding.event.ConfigChangedEvent"
           ]
         }
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.listener.ConfigChangeBroadcaster$$SpringCGLIB$$0",
+      "type": "com.synapse.embedding.listener.ConfigChangeBroadcaster$$SpringCGLIB$$0",
       "fields": [
         {
           "name": "CGLIB$CALLBACK_FILTER"
@@ -460,7 +460,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.model.EmbeddingRequest",
+      "type": "com.synapse.embedding.model.EmbeddingRequest",
       "methods": [
         {
           "name": "<init>",
@@ -474,7 +474,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.model.EmbeddingResult",
+      "type": "com.synapse.embedding.model.EmbeddingResult",
       "methods": [
         {
           "name": "content",
@@ -499,7 +499,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.model.Message",
+      "type": "com.synapse.embedding.model.Message",
       "methods": [
         {
           "name": "<init>",
@@ -513,7 +513,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.model.SearchRequest",
+      "type": "com.synapse.embedding.model.SearchRequest",
       "methods": [
         {
           "name": "<init>",
@@ -528,7 +528,7 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.model.SearchResult",
+      "type": "com.synapse.embedding.model.SearchResult",
       "methods": [
         {
           "name": "content",
@@ -557,26 +557,26 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.service.ConfigService",
+      "type": "com.synapse.embedding.service.ConfigService",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.config.EmbeddingConfig",
-            "com.chatst.embeddingdemo.service.EmbeddingService",
-            "com.chatst.embeddingdemo.service.VectorStorageService",
+            "com.synapse.embedding.config.EmbeddingConfig",
+            "com.synapse.embedding.service.EmbeddingService",
+            "com.synapse.embedding.service.VectorStorageService",
             "org.springframework.context.ApplicationEventPublisher"
           ]
         }
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.service.EmbeddingService",
+      "type": "com.synapse.embedding.service.EmbeddingService",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.config.EmbeddingConfig",
+            "com.synapse.embedding.config.EmbeddingConfig",
             "com.fasterxml.jackson.databind.ObjectMapper",
             "org.springframework.web.client.RestTemplate"
           ]
@@ -584,12 +584,12 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.service.RerankService",
+      "type": "com.synapse.embedding.service.RerankService",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.config.EmbeddingConfig",
+            "com.synapse.embedding.config.EmbeddingConfig",
             "com.fasterxml.jackson.databind.ObjectMapper",
             "org.springframework.web.client.RestTemplate"
           ]
@@ -597,13 +597,13 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.service.VectorStorageService",
+      "type": "com.synapse.embedding.service.VectorStorageService",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.chatst.embeddingdemo.config.EmbeddingConfig",
-            "com.chatst.embeddingdemo.service.EmbeddingService"
+            "com.synapse.embedding.config.EmbeddingConfig",
+            "com.synapse.embedding.service.EmbeddingService"
           ]
         },
         {
@@ -613,17 +613,17 @@
       ]
     },
     {
-      "type": "com.chatst.embeddingdemo.websocket.EmbeddingWebSocketHandler",
+      "type": "com.synapse.embedding.websocket.EmbeddingWebSocketHandler",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
             "com.fasterxml.jackson.databind.ObjectMapper",
-            "com.chatst.embeddingdemo.service.EmbeddingService",
-            "com.chatst.embeddingdemo.service.RerankService",
-            "com.chatst.embeddingdemo.service.VectorStorageService",
-            "com.chatst.embeddingdemo.service.ConfigService",
-            "com.chatst.embeddingdemo.config.EmbeddingConfig"
+            "com.synapse.embedding.service.EmbeddingService",
+            "com.synapse.embedding.service.RerankService",
+            "com.synapse.embedding.service.VectorStorageService",
+            "com.synapse.embedding.service.ConfigService",
+            "com.synapse.embedding.config.EmbeddingConfig"
           ]
         }
       ]
@@ -5288,61 +5288,61 @@
       "glob": "bge-small-zh-v1.5.onnx"
     },
     {
-      "glob": "com/chatst/embeddingdemo"
+      "glob": "com/synapse/embedding"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/AsyncConfig.class"
+      "glob": "com/synapse/embedding/config/AsyncConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/EmbeddingConfig$ChunkConfig.class"
+      "glob": "com/synapse/embedding/config/EmbeddingConfig$ChunkConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/EmbeddingConfig$ProviderConfig.class"
+      "glob": "com/synapse/embedding/config/EmbeddingConfig$ProviderConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/EmbeddingConfig$SlidingWindowConfig.class"
+      "glob": "com/synapse/embedding/config/EmbeddingConfig$SlidingWindowConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/EmbeddingConfig$StorageConfig.class"
+      "glob": "com/synapse/embedding/config/EmbeddingConfig$StorageConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/EmbeddingConfig.class"
+      "glob": "com/synapse/embedding/config/EmbeddingConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/HttpClientConfig.class"
+      "glob": "com/synapse/embedding/config/HttpClientConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/JacksonConfig.class"
+      "glob": "com/synapse/embedding/config/JacksonConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/config/WebSocketConfig.class"
+      "glob": "com/synapse/embedding/config/WebSocketConfig.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/controller/ConfigController.class"
+      "glob": "com/synapse/embedding/controller/ConfigController.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/controller/EmbeddingController.class"
+      "glob": "com/synapse/embedding/controller/EmbeddingController.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/listener/ConfigChangeBroadcaster.class"
+      "glob": "com/synapse/embedding/listener/ConfigChangeBroadcaster.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/service/ConfigService.class"
+      "glob": "com/synapse/embedding/service/ConfigService.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/service/EmbeddingService$Chunk.class"
+      "glob": "com/synapse/embedding/service/EmbeddingService$Chunk.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/service/EmbeddingService.class"
+      "glob": "com/synapse/embedding/service/EmbeddingService.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/service/RerankService.class"
+      "glob": "com/synapse/embedding/service/RerankService.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/service/VectorStorageService.class"
+      "glob": "com/synapse/embedding/service/VectorStorageService.class"
     },
     {
-      "glob": "com/chatst/embeddingdemo/websocket/EmbeddingWebSocketHandler.class"
+      "glob": "com/synapse/embedding/websocket/EmbeddingWebSocketHandler.class"
     },
     {
       "glob": "com/sun/jna/win32-x86-64/jnidispatch.dll"

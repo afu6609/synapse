@@ -8,14 +8,16 @@
         <version>4.0.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.chatst</groupId>
-    <artifactId>embeddingDemo</artifactId>
-    <version>0.1</version>
-    <name>embeddingDemo</name>
-    <description>embeddingDemo</description>
-    <url/>
+    <groupId>com.synapse</groupId>
+    <artifactId>synapse</artifactId>
+    <version>0.1.0</version>
+    <name>Synapse</name>
+    <description>Vector embedding service with memory association graph</description>
+    <url>https://github.com/Synapse-contributors/synapse</url>
     <licenses>
-        <license/>
+        <license>
+            <name>Cooperative Non-Commercial License (CNC-1.0)</name>
+        </license>
     </licenses>
     <developers>
         <developer/>
