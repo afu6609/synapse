@@ -2,6 +2,8 @@
 
 基于 Spring Boot 4.0.2 的向量嵌入服务，支持所有 OpenAI 兼容 API 的 Embedding/Rerank 提供商（Ollama、SiliconFlow、OpenAI、Jina 等），也支持本地 ONNX 嵌入模型（无需外部服务）。所有配置均可运行时动态修改。提供 REST API 和 WebSocket 双协议接口。支持 GraalVM native image 编译。
 
+**新功能**: 记忆关联拓扑图（搜索时自动建立共激活关系，激活关联记忆）、单条嵌入精确删除。
+
 **服务端口**: `23456`
 
 ---
@@ -14,6 +16,7 @@
 - [REST API](#rest-api)
 - [WebSocket API](#websocket-api)
 - [数据模型](#数据模型)
+- [记忆关联图](#记忆关联图)
 
 ---
 
@@ -172,6 +175,12 @@ java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/
 | `slidingWindow.separator` | string | 消息分隔符（默认 `\n---\n`） |
 | `storage.basePath` | string | 向量存储路径（默认 `./data/embedding-service`） |
 | `storage.vectorFileSuffix` | string | 向量文件后缀（默认 `.vec`） |
+| `graph.enabled` | boolean | 是否启用记忆关联图（默认 `true`） |
+| `graph.decayFactor` | double | 衰减因子，每次定时任务 weight *= factor（默认 `0.95`） |
+| `graph.pruneThreshold` | double | 剪枝阈值，低于此值的边被删除（默认 `0.01`） |
+| `graph.queryThreshold` | double | 查询阈值，weight >= threshold 的关联才返回（默认 `0.5`） |
+| `graph.maxGraphResults` | int | 图关联最多返回条数（默认 `5`） |
+| `graph.decayCron` | string | 衰减定时任务 cron 表达式（默认 `0 0 3 * * *`，每天凌晨 3 点） |
 
 ### 自动触发行为
 
@@ -182,8 +191,6 @@ java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/
 | 任意字段变更 | WebSocket 广播 `config_changed` 事件 |
 
 ### `application.yml` 默认配置
-
-只保留非 provider 的静态配置：
 
 ```yaml
 server:
@@ -204,6 +211,13 @@ embedding:
   storage:
     base-path: ./data/embedding-service
     vector-file-suffix: .vec
+  graph:
+    enabled: true
+    decay-factor: 0.95
+    prune-threshold: 0.01
+    query-threshold: 0.5
+    max-graph-results: 5
+    decay-cron: "0 0 3 * * *"
 ```
 
 ---
@@ -332,7 +346,7 @@ Content-Type: application/json
 
 ### 4. 搜索相似内容
 
-在指定聊天的向量数据中搜索相似内容，支持 Rerank 重排序和附近消息检索。
+在指定聊天的向量数据中搜索相似内容，支持 Rerank 重排序、附近消息检索和记忆关联图。
 
 **需要先配置 `provider.*`；使用 Rerank 还需配置 `rerank.*`。**
 
@@ -347,7 +361,8 @@ Content-Type: application/json
   "query": "向量数据库是什么",
   "topK": 5,
   "useRerank": true,
-  "nearbyCount": 2
+  "nearbyCount": 2,
+  "useGraph": true
 }
 ```
 
@@ -358,6 +373,7 @@ Content-Type: application/json
 | `topK` | int | 否 | `5` | 返回前 K 个结果 |
 | `useRerank` | boolean | 否 | `false` | 是否使用 Rerank 重排序 |
 | `nearbyCount` | int | 否 | `0` | 附近消息检索数（如 2 表示前后各 1 条） |
+| `useGraph` | boolean | 否 | `false` | 是否在结果中包含图关联记忆 |
 
 **响应** `200 OK`
 
@@ -369,7 +385,7 @@ Content-Type: application/json
     "score": 0.9523,
     "messageIds": ["msg1", "msg2"],
     "messageIndex": 2,
-    "isMatch": true
+    "matchType": "vector"
   },
   {
     "windowId": "msg3",
@@ -377,19 +393,51 @@ Content-Type: application/json
     "score": 0.0,
     "messageIds": ["msg3"],
     "messageIndex": 3,
-    "isMatch": false
+    "matchType": "nearby"
+  },
+  {
+    "windowId": "msg5_msg6",
+    "content": "[user]: 数据库对比...",
+    "score": 3.5,
+    "messageIds": ["msg5", "msg6"],
+    "messageIndex": 5,
+    "matchType": "graph"
   }
 ]
 ```
 
 | 响应字段 | 说明 |
 |----------|------|
-| `score` | 余弦相似度分数，`isMatch=false` 的附近消息为 `0.0` |
-| `isMatch` | `true` = 向量直接命中，`false` = 附近上下文消息 |
+| `score` | `vector`: 余弦相似度；`nearby`: `0.0`；`graph`: 图权重 |
+| `matchType` | `"vector"` = 向量直接命中，`"nearby"` = 附近上下文，`"graph"` = 图关联激活 |
 
 ---
 
-### 5. 删除聊天向量数据
+### 5. 删除单条嵌入
+
+按 windowId 精确删除一条嵌入，同时清理该节点在记忆关联图中的所有边。
+
+```
+DELETE /api/v1/chat/{chatId}/embedding/{windowId}
+```
+
+**成功** `200 OK`
+
+```json
+{ "status": "deleted", "chatId": "chat-001", "windowId": "msg1_msg2" }
+```
+
+**未找到** `404`
+
+```json
+{ "status": "not_found", "chatId": "chat-001", "windowId": "msg1_msg2" }
+```
+
+---
+
+### 6. 删除聊天向量数据
+
+删除整个会话的所有数据（嵌入 + 图 + 向量文件）。
 
 ```
 DELETE /api/v1/chat/{chatId}
@@ -401,7 +449,7 @@ DELETE /api/v1/chat/{chatId}
 
 ---
 
-### 6. 获取当前配置
+### 7. 获取当前配置
 
 读取当前所有配置项，API Key 自动脱敏。
 
@@ -423,13 +471,19 @@ GET /api/v1/config
   "slidingWindow.separator": "\n---\n",
   "storage.basePath": "./data/embedding-service",
   "storage.vectorFileSuffix": ".vec",
+  "graph.enabled": true,
+  "graph.decayFactor": 0.95,
+  "graph.pruneThreshold": 0.01,
+  "graph.queryThreshold": 0.5,
+  "graph.maxGraphResults": 5,
+  "graph.decayCron": "0 0 3 * * *",
   "detectedDimension": 1024
 }
 ```
 
 ---
 
-### 7. 更新配置
+### 8. 更新配置
 
 部分更新配置项。支持任意字段组合。变更会通过 WebSocket 广播通知所有已连接的客户端。
 
@@ -457,7 +511,7 @@ Content-Type: application/json
 
 ---
 
-### 8. 手动维度检测
+### 9. 手动维度检测
 
 ```
 POST /api/v1/config/detect-dimension
@@ -544,16 +598,39 @@ ws://localhost:23456/ws/embedding
   "query": "你好",
   "topK": 5,
   "useRerank": false,
-  "nearbyCount": 0
+  "nearbyCount": 0,
+  "useGraph": true
 }
 ```
 
+响应中每个结果的 `matchType` 字段标识来源：`"vector"` / `"nearby"` / `"graph"`。
+
 ---
 
-### action: delete — 删除聊天数据
+### action: delete — 删除数据
+
+**删除整个会话：**
 
 ```json
 { "action": "delete", "chatId": "chat-001" }
+```
+
+**删除单条嵌入：**
+
+```json
+{ "action": "delete", "chatId": "chat-001", "windowId": "msg1_msg2" }
+```
+
+有 `windowId` 时执行单条删除（并清理图边），无 `windowId` 时删除整个会话。
+
+单条删除响应：
+
+```json
+{ "type": "result", "action": "delete", "chatId": "chat-001", "windowId": "msg1_msg2", "status": "deleted" }
+```
+
+```json
+{ "type": "result", "action": "delete", "chatId": "chat-001", "windowId": "msg1_msg2", "status": "not_found" }
 ```
 
 ---
@@ -642,11 +719,46 @@ ws://localhost:23456/ws/embedding
   "score": 0.9523,
   "messageIds": ["msg1", "msg2"],
   "messageIndex": 2,
-  "isMatch": true
+  "matchType": "vector"
 }
 ```
 
 | 字段 | 说明 |
 |------|------|
-| `score` | 余弦相似度；`isMatch=false` 的附近消息为 `0.0` |
-| `isMatch` | `true` = 向量直接命中，`false` = 附近上下文 |
+| `score` | `vector`: 余弦相似度；`nearby`: `0.0`；`graph`: 图权重 |
+| `matchType` | `"vector"` = 向量直接命中，`"nearby"` = 附近上下文，`"graph"` = 图关联 |
+
+---
+
+## 记忆关联图
+
+记忆关联图是一个基于"共激活"原理的被动学习系统。当多条记忆在搜索中同时被向量命中时，它们之间的关联边会自动增强；长期不共同出现的边会衰减消失。
+
+### 工作原理
+
+1. **被动学习**：每次搜索时，如果 `graph.enabled=true`，所有 `matchType="vector"` 的直接命中结果会被两两记录为共激活对。weight 每次 +1.0。
+2. **关联激活**：搜索时如果 `useGraph=true`，会查询直接命中节点的关联节点（weight >= queryThreshold），将关联到的记忆追加到搜索结果中（`matchType="graph"`）。
+3. **自动衰减**：定时任务（默认每天凌晨 3 点）对所有 chatId 执行 `weight *= decayFactor`，并删除 `weight < pruneThreshold` 的边。
+4. **节点清理**：删除单条嵌入时自动删除该节点在图中的所有边。
+
+### 图数据存储
+
+图数据保存在与嵌入相同的 per-chat `metadata.db` 中（`memory_graph` 表），无需额外存储。
+
+### 配置示例
+
+```bash
+# 调整图关联参数
+curl -X PATCH http://localhost:23456/api/v1/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "graph.enabled": true,
+    "graph.queryThreshold": 0.5,
+    "graph.maxGraphResults": 5
+  }'
+
+# 关闭图关联功能
+curl -X PATCH http://localhost:23456/api/v1/config \
+  -H "Content-Type: application/json" \
+  -d '{"graph.enabled": false}'
+```

@@ -4,6 +4,7 @@ import com.chatst.embeddingdemo.config.EmbeddingConfig;
 import com.chatst.embeddingdemo.model.*;
 import com.chatst.embeddingdemo.service.ConfigService;
 import com.chatst.embeddingdemo.service.EmbeddingService;
+import com.chatst.embeddingdemo.service.MemoryGraphService;
 import com.chatst.embeddingdemo.service.RerankService;
 import com.chatst.embeddingdemo.service.VectorStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +21,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Component
 public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
@@ -33,6 +35,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
     private final EmbeddingService embeddingService;
     private final RerankService rerankService;
     private final VectorStorageService storageService;
+    private final MemoryGraphService memoryGraphService;
     private final ConfigService configService;
     private final EmbeddingConfig config;
 
@@ -42,12 +45,14 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                                      EmbeddingService embeddingService,
                                      RerankService rerankService,
                                      VectorStorageService storageService,
+                                     MemoryGraphService memoryGraphService,
                                      ConfigService configService,
                                      EmbeddingConfig config) {
         this.objectMapper = objectMapper;
         this.embeddingService = embeddingService;
         this.rerankService = rerankService;
         this.storageService = storageService;
+        this.memoryGraphService = memoryGraphService;
         this.configService = configService;
         this.config = config;
     }
@@ -140,6 +145,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
         int topK = request.path("topK").asInt(5);
         boolean useRerank = request.path("useRerank").asBoolean(false);
         int nearbyCount = request.path("nearbyCount").asInt(0);
+        boolean useGraph = request.path("useGraph").asBoolean(false);
 
         List<SearchResult> results;
 
@@ -164,6 +170,9 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
             results = storageService.search(chatId, query, topK);
         }
 
+        // 图关联逻辑
+        results = applyGraphLogic(chatId, results, useGraph);
+
         sendMessage(session, Map.of(
                 "type", "result",
                 "action", "search",
@@ -171,16 +180,97 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
         ));
     }
 
+    private List<SearchResult> applyGraphLogic(String chatId, List<SearchResult> results, boolean useGraph) {
+        var graphConfig = config.getGraph();
+        if (!graphConfig.isEnabled() || results.isEmpty()) {
+            return results;
+        }
+
+        // 收集 vector 直接命中的 windowId 用于共激活记录
+        List<String> directHitIds = results.stream()
+                .filter(r -> "vector".equals(r.matchType()))
+                .map(SearchResult::windowId)
+                .toList();
+
+        // 被动学习：始终记录共激活
+        if (directHitIds.size() >= 2) {
+            try {
+                memoryGraphService.recordCoActivation(chatId, directHitIds);
+            } catch (Exception e) {
+                log.warn("Failed to record co-activation", e);
+            }
+        }
+
+        // useGraph 控制是否在响应中包含图关联结果
+        if (useGraph) {
+            try {
+                Set<String> existingIds = results.stream()
+                        .map(SearchResult::windowId)
+                        .collect(Collectors.toSet());
+
+                var associations = memoryGraphService.queryAssociations(
+                        chatId, new LinkedHashSet<>(directHitIds),
+                        graphConfig.getQueryThreshold(), graphConfig.getMaxGraphResults());
+
+                Map<String, Double> graphScores = new LinkedHashMap<>();
+                for (var assoc : associations) {
+                    if (!existingIds.contains(assoc.windowId())) {
+                        graphScores.put(assoc.windowId(), assoc.weight());
+                    }
+                }
+
+                if (!graphScores.isEmpty()) {
+                    List<SearchResult> graphResults = storageService.fetchByWindowIds(chatId, graphScores, "graph");
+                    List<SearchResult> combined = new ArrayList<>(results);
+                    combined.addAll(graphResults);
+                    return combined;
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch graph associations", e);
+            }
+        }
+
+        return results;
+    }
+
     private void handleDelete(WebSocketSession session, JsonNode request) throws Exception {
         String chatId = request.path("chatId").asText();
-        storageService.deleteChat(chatId);
+        JsonNode windowIdNode = request.path("windowId");
 
-        sendMessage(session, Map.of(
-                "type", "result",
-                "action", "delete",
-                "chatId", chatId,
-                "status", "deleted"
-        ));
+        if (!windowIdNode.isMissingNode() && !windowIdNode.asText().isEmpty()) {
+            // 单条删除
+            String windowId = windowIdNode.asText();
+            boolean deleted = storageService.deleteEmbedding(chatId, windowId);
+
+            if (deleted) {
+                memoryGraphService.removeNode(chatId, windowId);
+                sendMessage(session, Map.of(
+                        "type", "result",
+                        "action", "delete",
+                        "chatId", chatId,
+                        "windowId", windowId,
+                        "status", "deleted"
+                ));
+            } else {
+                sendMessage(session, Map.of(
+                        "type", "result",
+                        "action", "delete",
+                        "chatId", chatId,
+                        "windowId", windowId,
+                        "status", "not_found"
+                ));
+            }
+        } else {
+            // 整个会话删除
+            storageService.deleteChat(chatId);
+
+            sendMessage(session, Map.of(
+                    "type", "result",
+                    "action", "delete",
+                    "chatId", chatId,
+                    "status", "deleted"
+            ));
+        }
     }
 
     private void handleConfig(WebSocketSession session, JsonNode request) {

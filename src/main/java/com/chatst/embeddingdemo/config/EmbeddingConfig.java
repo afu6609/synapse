@@ -12,12 +12,13 @@ public class EmbeddingConfig {
     private SlidingWindowConfig slidingWindow = new SlidingWindowConfig();
     private StorageConfig storage = new StorageConfig();
     private ChunkConfig chunk = new ChunkConfig();
+    private GraphConfig graph = new GraphConfig();
     private Integer detectedDimension;
 
     /**
-     * Unified provider config — used for both embedding and reranking.
-     * All providers use OpenAI-compatible API format.
-     * For Ollama, set baseUrl to http://localhost:11434/v1.
+     *统一的提供商配置-用于嵌入和重新排名。
+     *所有供应商使用openai兼容的API格式。
+     *对于Ollama，设置baseUrl为http://localhost:11434/v1。
      */
     public static class ProviderConfig {
         private String type = "api"; // "api"（默认，外部HTTP）或 "local"（本地ONNX模型）
@@ -73,6 +74,28 @@ public class EmbeddingConfig {
         public void setMaxLength(int maxLength) { this.maxLength = maxLength; }
     }
 
+    public static class GraphConfig {
+        private boolean enabled = true;
+        private double decayFactor = 0.95;
+        private double pruneThreshold = 0.01;
+        private double queryThreshold = 0.5;
+        private int maxGraphResults = 5;
+        private String decayCron = "0 0 3 * * *";
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+        public double getDecayFactor() { return decayFactor; }
+        public void setDecayFactor(double decayFactor) { this.decayFactor = decayFactor; }
+        public double getPruneThreshold() { return pruneThreshold; }
+        public void setPruneThreshold(double pruneThreshold) { this.pruneThreshold = pruneThreshold; }
+        public double getQueryThreshold() { return queryThreshold; }
+        public void setQueryThreshold(double queryThreshold) { this.queryThreshold = queryThreshold; }
+        public int getMaxGraphResults() { return maxGraphResults; }
+        public void setMaxGraphResults(int maxGraphResults) { this.maxGraphResults = maxGraphResults; }
+        public String getDecayCron() { return decayCron; }
+        public void setDecayCron(String decayCron) { this.decayCron = decayCron; }
+    }
+
     public ProviderConfig getProvider() { return provider; }
     public void setProvider(ProviderConfig provider) { this.provider = provider; }
     public ProviderConfig getRerank() { return rerank; }
@@ -83,6 +106,8 @@ public class EmbeddingConfig {
     public void setStorage(StorageConfig storage) { this.storage = storage; }
     public ChunkConfig getChunk() { return chunk; }
     public void setChunk(ChunkConfig chunk) { this.chunk = chunk; }
+    public GraphConfig getGraph() { return graph; }
+    public void setGraph(GraphConfig graph) { this.graph = graph; }
     public Integer getDetectedDimension() { return detectedDimension; }
     public void setDetectedDimension(Integer detectedDimension) { this.detectedDimension = detectedDimension; }
 }

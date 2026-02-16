@@ -125,7 +125,7 @@ public class VectorStorageService {
                             similarity,
                             Arrays.asList(messageIds.split(",")),
                             messageIndex,
-                            true // isMatch: 向量直接命中
+                            "vector"
                     ));
                 }
             }
@@ -215,13 +215,104 @@ public class VectorStorageService {
                             0.0, // 附近消息没有相似度分数
                             Arrays.asList(rs.getString("message_ids").split(",")),
                             rs.getInt("message_index"),
-                            false // isMatch=false: 附近上下文
+                            "nearby"
                     ));
                 }
             }
         }
 
         return results;
+    }
+
+    /**
+     * 根据 windowId 集合从数据库查询（用于图关联结果）
+     */
+    public List<SearchResult> fetchByWindowIds(String chatId, Map<String, Double> windowIdScores, String matchType) throws Exception {
+        Path chatDir = basePath.resolve(chatId);
+        Path dbPath = chatDir.resolve("metadata.db");
+
+        if (!Files.exists(dbPath) || windowIdScores.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<SearchResult> results = new ArrayList<>();
+
+        String placeholders = windowIdScores.keySet().stream().map(id -> "?").collect(Collectors.joining(","));
+        String sql = "SELECT window_id, content, message_ids, message_index FROM embeddings WHERE window_id IN (" + placeholders + ")";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            int paramIdx = 1;
+            for (String id : windowIdScores.keySet()) {
+                stmt.setString(paramIdx++, id);
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String windowId = rs.getString("window_id");
+                    results.add(new SearchResult(
+                            windowId,
+                            rs.getString("content"),
+                            windowIdScores.getOrDefault(windowId, 0.0),
+                            Arrays.asList(rs.getString("message_ids").split(",")),
+                            rs.getInt("message_index"),
+                            matchType
+                    ));
+                }
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * 删除单条嵌入
+     */
+    public boolean deleteEmbedding(String chatId, String windowId) throws Exception {
+        Path chatDir = basePath.resolve(chatId);
+        Path dbPath = chatDir.resolve("metadata.db");
+
+        if (!Files.exists(dbPath)) {
+            return false;
+        }
+
+        String vectorFile = null;
+
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
+            // 查询向量文件路径
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT vector_file FROM embeddings WHERE window_id = ?")) {
+                stmt.setString(1, windowId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        vectorFile = rs.getString("vector_file");
+                    } else {
+                        return false;
+                    }
+                }
+            }
+
+            // 删除数据库记录
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "DELETE FROM embeddings WHERE window_id = ?")) {
+                stmt.setString(1, windowId);
+                stmt.executeUpdate();
+            }
+        }
+
+        // 删除向量文件
+        if (vectorFile != null) {
+            Path vecPath = chatDir.resolve(vectorFile);
+            try {
+                Files.deleteIfExists(vecPath);
+            } catch (IOException e) {
+                log.warn("Failed to delete vector file: {}", vecPath, e);
+            }
+        }
+
+        log.info("Deleted embedding {} for chat: {}", windowId, chatId);
+        return true;
     }
 
     /**

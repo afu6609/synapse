@@ -3,6 +3,7 @@ package com.chatst.embeddingdemo.controller;
 import com.chatst.embeddingdemo.config.EmbeddingConfig;
 import com.chatst.embeddingdemo.model.*;
 import com.chatst.embeddingdemo.service.EmbeddingService;
+import com.chatst.embeddingdemo.service.MemoryGraphService;
 import com.chatst.embeddingdemo.service.RerankService;
 import com.chatst.embeddingdemo.service.VectorStorageService;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -22,15 +24,18 @@ public class EmbeddingController {
     private final EmbeddingService embeddingService;
     private final RerankService rerankService;
     private final VectorStorageService storageService;
+    private final MemoryGraphService memoryGraphService;
     private final EmbeddingConfig config;
 
     public EmbeddingController(EmbeddingService embeddingService,
                                RerankService rerankService,
                                VectorStorageService storageService,
+                               MemoryGraphService memoryGraphService,
                                EmbeddingConfig config) {
         this.embeddingService = embeddingService;
         this.rerankService = rerankService;
         this.storageService = storageService;
+        this.memoryGraphService = memoryGraphService;
         this.config = config;
     }
 
@@ -98,8 +103,8 @@ public class EmbeddingController {
             return ResponseEntity.badRequest().body(Map.of("error", "Embedding provider is not configured"));
         }
 
-        log.info("Search request for chat: {}, query: {}, nearbyCount: {}",
-                request.chatId(), request.query(), request.nearbyCount());
+        log.info("Search request for chat: {}, query: {}, nearbyCount: {}, useGraph: {}",
+                request.chatId(), request.query(), request.nearbyCount(), request.useGraph());
 
         try {
             List<SearchResult> results;
@@ -124,9 +129,83 @@ public class EmbeddingController {
                 results = storageService.search(request.chatId(), request.query(), request.topK());
             }
 
+            // 图关联逻辑
+            results = applyGraphLogic(request.chatId(), results, request.useGraph());
+
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             log.error("Search failed", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    private List<SearchResult> applyGraphLogic(String chatId, List<SearchResult> results, boolean useGraph) {
+        var graphConfig = config.getGraph();
+        if (!graphConfig.isEnabled() || results.isEmpty()) {
+            return results;
+        }
+
+        // 收集 vector 直接命中的 windowId 用于共激活记录
+        List<String> directHitIds = results.stream()
+                .filter(r -> "vector".equals(r.matchType()))
+                .map(SearchResult::windowId)
+                .toList();
+
+        // 被动学习：始终记录共激活（只要 graph.enabled）
+        if (directHitIds.size() >= 2) {
+            try {
+                memoryGraphService.recordCoActivation(chatId, directHitIds);
+            } catch (Exception e) {
+                log.warn("Failed to record co-activation", e);
+            }
+        }
+
+        // useGraph 控制是否在响应中包含图关联结果
+        if (useGraph) {
+            try {
+                Set<String> existingIds = results.stream()
+                        .map(SearchResult::windowId)
+                        .collect(Collectors.toSet());
+
+                var associations = memoryGraphService.queryAssociations(
+                        chatId, new LinkedHashSet<>(directHitIds),
+                        graphConfig.getQueryThreshold(), graphConfig.getMaxGraphResults());
+
+                // 排除已存在的 windowId
+                Map<String, Double> graphScores = new LinkedHashMap<>();
+                for (var assoc : associations) {
+                    if (!existingIds.contains(assoc.windowId())) {
+                        graphScores.put(assoc.windowId(), assoc.weight());
+                    }
+                }
+
+                if (!graphScores.isEmpty()) {
+                    List<SearchResult> graphResults = storageService.fetchByWindowIds(chatId, graphScores, "graph");
+                    List<SearchResult> combined = new ArrayList<>(results);
+                    combined.addAll(graphResults);
+                    return combined;
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch graph associations", e);
+            }
+        }
+
+        return results;
+    }
+
+    @DeleteMapping("/chat/{chatId}/embedding/{windowId}")
+    public ResponseEntity<Map<String, String>> deleteEmbedding(@PathVariable String chatId,
+                                                                @PathVariable String windowId) {
+        try {
+            boolean deleted = storageService.deleteEmbedding(chatId, windowId);
+            if (deleted) {
+                memoryGraphService.removeNode(chatId, windowId);
+                return ResponseEntity.ok(Map.of("status", "deleted", "chatId", chatId, "windowId", windowId));
+            } else {
+                return ResponseEntity.status(404).body(Map.of("status", "not_found", "chatId", chatId, "windowId", windowId));
+            }
+        } catch (Exception e) {
+            log.error("Delete embedding failed", e);
             return ResponseEntity.internalServerError().build();
         }
     }

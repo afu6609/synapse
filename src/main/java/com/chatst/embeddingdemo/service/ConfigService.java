@@ -56,6 +56,14 @@ public class ConfigService {
         snapshot.put("chunk.enabled", Boolean.valueOf(config.getChunk().isEnabled()));
         snapshot.put("chunk.maxLength", Integer.valueOf(config.getChunk().getMaxLength()));
 
+        // Graph
+        snapshot.put("graph.enabled", Boolean.valueOf(config.getGraph().isEnabled()));
+        snapshot.put("graph.decayFactor", Double.valueOf(config.getGraph().getDecayFactor()));
+        snapshot.put("graph.pruneThreshold", Double.valueOf(config.getGraph().getPruneThreshold()));
+        snapshot.put("graph.queryThreshold", Double.valueOf(config.getGraph().getQueryThreshold()));
+        snapshot.put("graph.maxGraphResults", Integer.valueOf(config.getGraph().getMaxGraphResults()));
+        snapshot.put("graph.decayCron", config.getGraph().getDecayCron());
+
         // Detected dimension
         snapshot.put("detectedDimension", config.getDetectedDimension());
 
@@ -221,6 +229,54 @@ public class ConfigService {
                 int intVal = value instanceof Number n ? n.intValue() : Integer.parseInt(strVal);
                 if (config.getChunk().getMaxLength() != intVal) {
                     config.getChunk().setMaxLength(intVal);
+                    yield true;
+                }
+                yield false;
+            }
+            // Graph
+            case "graph.enabled" -> {
+                boolean boolVal = value instanceof Boolean b ? b : Boolean.parseBoolean(strVal);
+                if (config.getGraph().isEnabled() != boolVal) {
+                    config.getGraph().setEnabled(boolVal);
+                    yield true;
+                }
+                yield false;
+            }
+            case "graph.decayFactor" -> {
+                double dblVal = value instanceof Number n ? n.doubleValue() : Double.parseDouble(strVal);
+                if (config.getGraph().getDecayFactor() != dblVal) {
+                    config.getGraph().setDecayFactor(dblVal);
+                    yield true;
+                }
+                yield false;
+            }
+            case "graph.pruneThreshold" -> {
+                double dblVal = value instanceof Number n ? n.doubleValue() : Double.parseDouble(strVal);
+                if (config.getGraph().getPruneThreshold() != dblVal) {
+                    config.getGraph().setPruneThreshold(dblVal);
+                    yield true;
+                }
+                yield false;
+            }
+            case "graph.queryThreshold" -> {
+                double dblVal = value instanceof Number n ? n.doubleValue() : Double.parseDouble(strVal);
+                if (config.getGraph().getQueryThreshold() != dblVal) {
+                    config.getGraph().setQueryThreshold(dblVal);
+                    yield true;
+                }
+                yield false;
+            }
+            case "graph.maxGraphResults" -> {
+                int intVal = value instanceof Number n ? n.intValue() : Integer.parseInt(strVal);
+                if (config.getGraph().getMaxGraphResults() != intVal) {
+                    config.getGraph().setMaxGraphResults(intVal);
+                    yield true;
+                }
+                yield false;
+            }
+            case "graph.decayCron" -> {
+                if (!Objects.equals(config.getGraph().getDecayCron(), strVal)) {
+                    config.getGraph().setDecayCron(strVal);
                     yield true;
                 }
                 yield false;

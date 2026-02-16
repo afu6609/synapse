@@ -11,7 +11,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
         EmbeddingRequest.class,
         EmbeddingResult.class,
         SearchRequest.class,
-        SearchResult.class
+        SearchResult.class,
+        GraphAssociation.class
 })
 public class EmbeddingDemoApplication {
 

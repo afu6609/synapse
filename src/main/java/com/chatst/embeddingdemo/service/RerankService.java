@@ -104,7 +104,7 @@ public class RerankService {
                             score,
                             original.messageIds(),
                             original.messageIndex(),
-                            original.isMatch()
+                            original.matchType()
                     ));
                 }
             }

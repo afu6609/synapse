@@ -25,6 +25,15 @@ embedding:
     base-path: ./data/embedding-service
     vector-file-suffix: .vec
 
+  # 记忆关联图配置
+  graph:
+    enabled: true
+    decay-factor: 0.95
+    prune-threshold: 0.01
+    query-threshold: 0.5
+    max-graph-results: 5
+    decay-cron: "0 0 3 * * *"
+
   # Provider 和 Rerank 通过运行时 API 配置:
   #   provider.type / provider.baseUrl / provider.model / provider.apiKey
   #   rerank.type / rerank.baseUrl / rerank.model / rerank.apiKey
