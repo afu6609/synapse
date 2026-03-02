@@ -221,4 +221,97 @@ public class MemoryGraphService {
             log.warn("Failed to iterate chat directories for graph decay: {}", e.getMessage());
         }
     }
+
+    /**
+     * 削弱指定两个节点之间的关联边。
+     * 
+     * @param amount 削弱量（从权重中减去），如果结果 <= 0 则删除该边
+     * @return 操作结果：weakened / removed / not_found
+     */
+    public String weakenEdge(String chatId, String nodeA, String nodeB, double amount) {
+        // 保证 node_a < node_b
+        if (nodeA.compareTo(nodeB) > 0) {
+            String tmp = nodeA;
+            nodeA = nodeB;
+            nodeB = tmp;
+        }
+
+        try (Connection conn = getConnection(chatId)) {
+            // 先查当前权重
+            double currentWeight;
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT weight FROM memory_graph WHERE node_a = ? AND node_b = ?")) {
+                stmt.setString(1, nodeA);
+                stmt.setString(2, nodeB);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (!rs.next()) {
+                        return "not_found";
+                    }
+                    currentWeight = rs.getDouble("weight");
+                }
+            }
+
+            double newWeight = currentWeight - amount;
+            if (newWeight <= 0) {
+                // 权重归零，删除边
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM memory_graph WHERE node_a = ? AND node_b = ?")) {
+                    stmt.setString(1, nodeA);
+                    stmt.setString(2, nodeB);
+                    stmt.executeUpdate();
+                }
+                log.info("Removed edge {}<->{} in chat {} (weight {} - {} <= 0)",
+                        nodeA, nodeB, chatId, currentWeight, amount);
+                return "removed";
+            } else {
+                // 削弱权重
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "UPDATE memory_graph SET weight = ? WHERE node_a = ? AND node_b = ?")) {
+                    stmt.setDouble(1, newWeight);
+                    stmt.setString(2, nodeA);
+                    stmt.setString(3, nodeB);
+                    stmt.executeUpdate();
+                }
+                log.info("Weakened edge {}<->{} in chat {} from {} to {}",
+                        nodeA, nodeB, chatId, currentWeight, newWeight);
+                return "weakened";
+            }
+        } catch (Exception e) {
+            log.error("Failed to weaken edge {}<->{} in chat {}: {}", nodeA, nodeB, chatId, e.getMessage());
+            throw new RuntimeException("Failed to weaken edge: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 获取指定 chat 的所有图边（用于查看图状态）
+     */
+    public List<Map<String, Object>> getEdges(String chatId) {
+        List<Map<String, Object>> edges = new ArrayList<>();
+
+        Path dbPath = basePath.resolve(chatId).resolve("metadata.db");
+        if (!Files.exists(dbPath)) {
+            return edges;
+        }
+
+        try (Connection conn = getConnection(chatId)) {
+            String sql = "SELECT node_a, node_b, weight, co_activation_count, last_activated_at " +
+                    "FROM memory_graph ORDER BY weight DESC";
+            try (Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery(sql)) {
+                while (rs.next()) {
+                    Map<String, Object> edge = new LinkedHashMap<>();
+                    edge.put("nodeA", rs.getString("node_a"));
+                    edge.put("nodeB", rs.getString("node_b"));
+                    edge.put("weight", rs.getDouble("weight"));
+                    edge.put("coActivationCount", rs.getInt("co_activation_count"));
+                    edge.put("lastActivatedAt", rs.getString("last_activated_at"));
+                    edges.add(edge);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get graph edges for chat {}: {}", chatId, e.getMessage());
+        }
+
+        return edges;
+    }
 }

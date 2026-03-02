@@ -28,10 +28,10 @@ public class EmbeddingController {
     private final EmbeddingConfig config;
 
     public EmbeddingController(EmbeddingService embeddingService,
-                               RerankService rerankService,
-                               VectorStorageService storageService,
-                               MemoryGraphService memoryGraphService,
-                               EmbeddingConfig config) {
+            RerankService rerankService,
+            VectorStorageService storageService,
+            MemoryGraphService memoryGraphService,
+            EmbeddingConfig config) {
         this.embeddingService = embeddingService;
         this.rerankService = rerankService;
         this.storageService = storageService;
@@ -60,13 +60,11 @@ public class EmbeddingController {
                 results = embeddingService.embedWithSlidingWindow(
                         request.chatId(),
                         request.messages(),
-                        request.windowSize()
-                );
+                        request.windowSize());
             } else {
                 results = embeddingService.embedIndividually(
                         request.chatId(),
-                        request.messages()
-                );
+                        request.messages());
             }
 
             storageService.saveEmbeddings(request.chatId(), results);
@@ -93,8 +91,7 @@ public class EmbeddingController {
         return ResponseEntity.ok(Map.of(
                 "text", text,
                 "vector", vector,
-                "dimensions", vector.size()
-        ));
+                "dimensions", vector.size()));
     }
 
     @PostMapping("/search")
@@ -124,7 +121,8 @@ public class EmbeddingController {
                     results = storageService.addNearby(request.chatId(), results, request.nearbyCount());
                 }
             } else if (request.nearbyCount() > 0) {
-                results = storageService.searchWithNearby(request.chatId(), request.query(), request.topK(), request.nearbyCount());
+                results = storageService.searchWithNearby(request.chatId(), request.query(), request.topK(),
+                        request.nearbyCount());
             } else {
                 results = storageService.search(request.chatId(), request.query(), request.topK());
             }
@@ -195,14 +193,15 @@ public class EmbeddingController {
 
     @DeleteMapping("/chat/{chatId}/embedding/{windowId}")
     public ResponseEntity<Map<String, String>> deleteEmbedding(@PathVariable String chatId,
-                                                                @PathVariable String windowId) {
+            @PathVariable String windowId) {
         try {
             boolean deleted = storageService.deleteEmbedding(chatId, windowId);
             if (deleted) {
                 memoryGraphService.removeNode(chatId, windowId);
                 return ResponseEntity.ok(Map.of("status", "deleted", "chatId", chatId, "windowId", windowId));
             } else {
-                return ResponseEntity.status(404).body(Map.of("status", "not_found", "chatId", chatId, "windowId", windowId));
+                return ResponseEntity.status(404)
+                        .body(Map.of("status", "not_found", "chatId", chatId, "windowId", windowId));
             }
         } catch (Exception e) {
             log.error("Delete embedding failed", e);
@@ -219,5 +218,47 @@ public class EmbeddingController {
             log.error("Delete failed", e);
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    // ========== 图关联管理 ==========
+
+    @GetMapping("/chat/{chatId}/graph")
+    public ResponseEntity<?> getGraphEdges(@PathVariable String chatId) {
+        var edges = memoryGraphService.getEdges(chatId);
+        return ResponseEntity.ok(Map.of("chatId", chatId, "edges", edges, "count", edges.size()));
+    }
+
+    @PostMapping("/chat/{chatId}/graph/weaken")
+    public ResponseEntity<?> weakenEdge(@PathVariable String chatId,
+            @RequestBody Map<String, Object> request) {
+        String nodeA = (String) request.get("nodeA");
+        String nodeB = (String) request.get("nodeB");
+        double amount = request.containsKey("amount")
+                ? ((Number) request.get("amount")).doubleValue()
+                : 1.0;
+
+        if (nodeA == null || nodeB == null || nodeA.isBlank() || nodeB.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "nodeA and nodeB are required"));
+        }
+
+        try {
+            String result = memoryGraphService.weakenEdge(chatId, nodeA, nodeB, amount);
+            return ResponseEntity.ok(Map.of(
+                    "chatId", chatId, "nodeA", nodeA, "nodeB", nodeB,
+                    "amount", amount, "status", result));
+        } catch (Exception e) {
+            log.error("Weaken edge failed", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/chat/{chatId}/graph/decay")
+    public ResponseEntity<?> manualDecay(@PathVariable String chatId) {
+        var graphConfig = config.getGraph();
+        memoryGraphService.decayAndPrune(chatId, graphConfig.getDecayFactor(), graphConfig.getPruneThreshold());
+        return ResponseEntity.ok(Map.of(
+                "chatId", chatId, "status", "decayed",
+                "decayFactor", graphConfig.getDecayFactor(),
+                "pruneThreshold", graphConfig.getPruneThreshold()));
     }
 }

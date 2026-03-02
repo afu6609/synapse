@@ -11,6 +11,7 @@ A **vector embedding and memory association service** built on Spring Boot 4.0.2
 - **Unified API Access** — Compatible with Ollama, SiliconFlow, OpenAI, Jina, and all OpenAI-compatible Embedding/Rerank APIs
 - **Local ONNX Models** — Built-in BGE-Small-ZH-v15, generate vectors without any external service
 - **Runtime Configuration** — All provider settings configured via API at runtime, no restart required
+- **Config Persistence** — Runtime configurations automatically saved to SQLite, restored on restart
 - **Automatic Message Chunking** — Long responses automatically split by paragraph with context anchors
 - **Memory Association Graph** — Passive learning system based on "co-activation" principle, automatically builds associations during search and activates related memories
 - **Vector Search + Rerank** — Cosine similarity search + reranking + nearby message retrieval + graph association activation
@@ -159,9 +160,29 @@ DELETE /api/v1/chat/{chatId}                        # Delete entire chat data
 
 ```
 GET   /api/v1/config                    # Get current configuration
-PATCH /api/v1/config                    # Update configuration
+PATCH /api/v1/config                    # Update configuration (auto-persisted)
 POST  /api/v1/config/detect-dimension   # Manual dimension detection
 ```
+
+### Graph Management
+
+```
+GET  /api/v1/chat/{chatId}/graph          # List graph edges
+POST /api/v1/chat/{chatId}/graph/weaken   # Weaken a specific edge
+POST /api/v1/chat/{chatId}/graph/decay    # Manually trigger decay
+```
+
+**Weaken edge request body:**
+
+```json
+{
+  "nodeA": "msg1-msg2",
+  "nodeB": "msg3-msg4",
+  "amount": 0.5
+}
+```
+
+- `amount` is optional, defaults to `1.0`; edge is removed when weight drops to ≤ 0
 
 ---
 
@@ -181,6 +202,7 @@ ws://localhost:23456/ws/embedding
 | `search` | Search similar content (supports `useGraph`) |
 | `delete` | Delete data (supports `windowId` for single deletion) |
 | `config` | Configuration management (get / update / detect-dimension) |
+| `graph` | Graph management (get / weaken / decay) |
 | `ping` | Heartbeat |
 
 Configuration updates are automatically broadcast as `config_changed` events to all connected clients.
@@ -189,7 +211,7 @@ Configuration updates are automatically broadcast as `config_changed` events to 
 
 ## ⚙️ Runtime Configuration
 
-All settings are configured dynamically via API — no config file changes or restarts needed.
+All settings are configured dynamically via API — no config file changes or restarts needed. Configuration changes are automatically persisted to SQLite (`config.db`) and restored on restart.
 
 | Key | Description |
 |-----|-------------|
@@ -216,8 +238,11 @@ A passive learning system based on the "co-activation" principle:
 
 1. **Passive Learning** — During search, all directly matched results are automatically recorded as co-activation pairs
 2. **Association Activation** — Search queries associated memories of directly matched nodes and appends them to results
-3. **Automatic Decay** — Scheduled task (default: daily at 3 AM) decays all edge weights and prunes low-weight edges
-4. **Node Cleanup** — Deleting an embedding automatically removes all its associated graph edges
+3. **Automatic Decay** — Scheduled task (default: daily at 3 AM) multiplies all edge weights by decay factor and prunes low-weight edges
+4. **Manual Decay** — Trigger decay for a single chat via API (`POST .../graph/decay`)
+5. **Precise Weakening** — Weaken a specific edge between two nodes via API (`POST .../graph/weaken`); subtraction-based, edge removed when weight ≤ 0
+6. **Graph Inspection** — View all edges and weights for a chat via API (`GET .../graph`)
+7. **Node Cleanup** — Deleting an embedding automatically removes all its associated graph edges
 
 ---
 

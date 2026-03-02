@@ -2,6 +2,7 @@ package com.synapse.embedding.service;
 
 import com.synapse.embedding.config.EmbeddingConfig;
 import com.synapse.embedding.event.ConfigChangedEvent;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,16 +19,68 @@ public class ConfigService {
     private final EmbeddingConfig config;
     private final EmbeddingService embeddingService;
     private final VectorStorageService vectorStorageService;
+    private final ConfigStorageService configStorageService;
     private final ApplicationEventPublisher eventPublisher;
 
     public ConfigService(EmbeddingConfig config,
-                         EmbeddingService embeddingService,
-                         VectorStorageService vectorStorageService,
-                         ApplicationEventPublisher eventPublisher) {
+            EmbeddingService embeddingService,
+            VectorStorageService vectorStorageService,
+            ConfigStorageService configStorageService,
+            ApplicationEventPublisher eventPublisher) {
         this.config = config;
         this.embeddingService = embeddingService;
         this.vectorStorageService = vectorStorageService;
+        this.configStorageService = configStorageService;
         this.eventPublisher = eventPublisher;
+    }
+
+    /**
+     * 启动时从 SQLite 加载已持久化的配置，静默应用到 EmbeddingConfig。
+     * 如果 provider 已配置则自动触发维度检测。
+     */
+    @PostConstruct
+    public void loadPersistedConfig() {
+        Map<String, String> persisted = configStorageService.loadAll();
+        if (persisted.isEmpty()) {
+            log.info("No persisted config found, using defaults");
+            return;
+        }
+
+        log.info("Loading {} persisted config entries", persisted.size());
+        boolean providerChanged = false;
+
+        for (Map.Entry<String, String> entry : persisted.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            try {
+                boolean changed = applyField(key, value);
+                if (changed && isProviderField(key)) {
+                    providerChanged = true;
+                }
+            } catch (Exception e) {
+                log.warn("Failed to apply persisted config key '{}': {}", key, e.getMessage());
+            }
+        }
+
+        // 如果 provider 已配置，自动检测维度
+        if (providerChanged && config.getProvider().isConfigured()) {
+            try {
+                detectDimension();
+            } catch (Exception e) {
+                log.warn("Auto dimension detection failed on startup: {}", e.getMessage());
+            }
+        }
+
+        // storage path 变更
+        if (persisted.containsKey("storage.basePath")) {
+            try {
+                refreshStoragePath();
+            } catch (Exception e) {
+                log.warn("Failed to refresh storage path on startup: {}", e.getMessage());
+            }
+        }
+
+        log.info("Persisted config loaded successfully");
     }
 
     public Map<String, Object> getConfigSnapshot() {
@@ -112,9 +165,16 @@ public class ConfigService {
             }
         }
 
+        // 持久化变更的配置
+        Map<String, Object> toSave = new LinkedHashMap<>();
+        for (String field : changedFields) {
+            toSave.put(field, updates.get(field));
+        }
+        configStorageService.saveAll(toSave);
+
         broadcastConfigChange(changedFields);
 
-        log.info("Config updated, changed fields: {}", changedFields);
+        log.info("Config updated and persisted, changed fields: {}", changedFields);
         return changedFields;
     }
 
@@ -123,6 +183,8 @@ public class ConfigService {
             List<Float> testVector = embeddingService.getEmbedding("test");
             Integer dimension = Integer.valueOf(testVector.size());
             config.setDetectedDimension(dimension);
+            // 持久化检测到的维度
+            configStorageService.save("detectedDimension", dimension.toString());
             log.info("Detected embedding dimension: {}", dimension);
             return dimension;
         } catch (Exception e) {

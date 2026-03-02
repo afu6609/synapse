@@ -28,7 +28,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(EmbeddingWebSocketHandler.class);
 
-    private static final int SEND_TIME_LIMIT = 5000;   // 5s
+    private static final int SEND_TIME_LIMIT = 5000; // 5s
     private static final int BUFFER_SIZE_LIMIT = 512 * 1024; // 512KB
 
     private final ObjectMapper objectMapper;
@@ -42,12 +42,12 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     public EmbeddingWebSocketHandler(ObjectMapper objectMapper,
-                                     EmbeddingService embeddingService,
-                                     RerankService rerankService,
-                                     VectorStorageService storageService,
-                                     MemoryGraphService memoryGraphService,
-                                     ConfigService configService,
-                                     EmbeddingConfig config) {
+            EmbeddingService embeddingService,
+            RerankService rerankService,
+            VectorStorageService storageService,
+            MemoryGraphService memoryGraphService,
+            ConfigService configService,
+            EmbeddingConfig config) {
         this.objectMapper = objectMapper;
         this.embeddingService = embeddingService;
         this.rerankService = rerankService;
@@ -59,7 +59,8 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        WebSocketSession decorated = new ConcurrentWebSocketSessionDecorator(session, SEND_TIME_LIMIT, BUFFER_SIZE_LIMIT);
+        WebSocketSession decorated = new ConcurrentWebSocketSessionDecorator(session, SEND_TIME_LIMIT,
+                BUFFER_SIZE_LIMIT);
         sessions.put(session.getId(), decorated);
         log.info("WebSocket connected: {}", session.getId());
         sendMessage(decorated, Map.of("type", "connected", "sessionId", session.getId()));
@@ -88,6 +89,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                 case "search" -> handleSearch(decorated, request);
                 case "delete" -> handleDelete(decorated, request);
                 case "config" -> handleConfig(decorated, request);
+                case "graph" -> handleGraph(decorated, request);
                 case "ping" -> sendMessage(decorated, Map.of("type", "pong"));
                 default -> sendError(decorated, "Unknown action: " + action);
             }
@@ -99,7 +101,8 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
     private void handleEmbed(WebSocketSession session, JsonNode request) throws Exception {
         if (!config.getProvider().isConfigured()) {
-            sendError(session, "Embedding provider is not configured. Please set provider.baseUrl and provider.model first.");
+            sendError(session,
+                    "Embedding provider is not configured. Please set provider.baseUrl and provider.model first.");
             return;
         }
 
@@ -114,8 +117,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                 "type", "progress",
                 "action", "embed",
                 "status", "started",
-                "total", messages.size()
-        ));
+                "total", messages.size()));
 
         List<EmbeddingResult> results;
         if (useSlidingWindow) {
@@ -130,13 +132,13 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                 "type", "result",
                 "action", "embed",
                 "status", "completed",
-                "data", results
-        ));
+                "data", results));
     }
 
     private void handleSearch(WebSocketSession session, JsonNode request) throws Exception {
         if (!config.getProvider().isConfigured()) {
-            sendError(session, "Embedding provider is not configured. Please set provider.baseUrl and provider.model first.");
+            sendError(session,
+                    "Embedding provider is not configured. Please set provider.baseUrl and provider.model first.");
             return;
         }
 
@@ -155,7 +157,8 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
 
             if (!results.isEmpty()) {
                 if (!config.getRerank().isConfigured()) {
-                    sendError(session, "Rerank provider is not configured. Please set rerank.baseUrl and rerank.model first.");
+                    sendError(session,
+                            "Rerank provider is not configured. Please set rerank.baseUrl and rerank.model first.");
                     return;
                 }
                 results = rerankService.rerank(query, results, topK);
@@ -176,8 +179,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
         sendMessage(session, Map.of(
                 "type", "result",
                 "action", "search",
-                "data", results
-        ));
+                "data", results));
     }
 
     private List<SearchResult> applyGraphLogic(String chatId, List<SearchResult> results, boolean useGraph) {
@@ -249,16 +251,14 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                         "action", "delete",
                         "chatId", chatId,
                         "windowId", windowId,
-                        "status", "deleted"
-                ));
+                        "status", "deleted"));
             } else {
                 sendMessage(session, Map.of(
                         "type", "result",
                         "action", "delete",
                         "chatId", chatId,
                         "windowId", windowId,
-                        "status", "not_found"
-                ));
+                        "status", "not_found"));
             }
         } else {
             // 整个会话删除
@@ -268,8 +268,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                     "type", "result",
                     "action", "delete",
                     "chatId", chatId,
-                    "status", "deleted"
-            ));
+                    "status", "deleted"));
         }
     }
 
@@ -280,8 +279,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
             case "get" -> sendMessage(session, Map.of(
                     "type", "result",
                     "action", "config",
-                    "data", configService.getConfigSnapshot()
-            ));
+                    "data", configService.getConfigSnapshot()));
             case "update" -> {
                 JsonNode dataNode = request.path("data");
                 @SuppressWarnings("unchecked")
@@ -291,8 +289,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                         "type", "result",
                         "action", "config",
                         "changedFields", changedFields,
-                        "data", configService.getConfigSnapshot()
-                ));
+                        "data", configService.getConfigSnapshot()));
             }
             case "detect-dimension" -> {
                 try {
@@ -301,8 +298,7 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
                             "type", "result",
                             "action", "config",
                             "detectedDimension", dimension,
-                            "data", configService.getConfigSnapshot()
-                    ));
+                            "data", configService.getConfigSnapshot()));
                 } catch (Exception e) {
                     sendError(session, "Dimension detection failed: " + e.getMessage());
                 }
@@ -311,8 +307,53 @@ public class EmbeddingWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    private void handleGraph(WebSocketSession session, JsonNode request) {
+        String chatId = request.path("chatId").asText();
+        String operation = request.path("operation").asText("get");
+
+        switch (operation) {
+            case "get" -> {
+                var edges = memoryGraphService.getEdges(chatId);
+                sendMessage(session, Map.of(
+                        "type", "result", "action", "graph",
+                        "chatId", chatId, "edges", edges, "count", edges.size()));
+            }
+            case "weaken" -> {
+                String nodeA = request.path("nodeA").asText();
+                String nodeB = request.path("nodeB").asText();
+                double amount = request.path("amount").asDouble(1.0);
+
+                if (nodeA.isEmpty() || nodeB.isEmpty()) {
+                    sendError(session, "nodeA and nodeB are required");
+                    return;
+                }
+
+                try {
+                    String result = memoryGraphService.weakenEdge(chatId, nodeA, nodeB, amount);
+                    sendMessage(session, Map.of(
+                            "type", "result", "action", "graph",
+                            "chatId", chatId, "nodeA", nodeA, "nodeB", nodeB,
+                            "amount", amount, "status", result));
+                } catch (Exception e) {
+                    sendError(session, "Weaken edge failed: " + e.getMessage());
+                }
+            }
+            case "decay" -> {
+                var graphConfig = config.getGraph();
+                memoryGraphService.decayAndPrune(chatId, graphConfig.getDecayFactor(), graphConfig.getPruneThreshold());
+                sendMessage(session, Map.of(
+                        "type", "result", "action", "graph",
+                        "chatId", chatId, "status", "decayed",
+                        "decayFactor", graphConfig.getDecayFactor(),
+                        "pruneThreshold", graphConfig.getPruneThreshold()));
+            }
+            default -> sendError(session, "Unknown graph operation: " + operation);
+        }
+    }
+
     /**
-     * Broadcast a message to all connected WS clients (thread-safe via ConcurrentWebSocketSessionDecorator).
+     * Broadcast a message to all connected WS clients (thread-safe via
+     * ConcurrentWebSocketSessionDecorator).
      */
     public void broadcast(Object data) {
         String json;

@@ -11,6 +11,7 @@
 - **统一 API 接入** — 兼容 Ollama、SiliconFlow、OpenAI、Jina 等所有 OpenAI 兼容的 Embedding/Rerank API
 - **本地 ONNX 模型** — 内置 BGE-Small-ZH-v15，无需外部服务即可生成向量
 - **运行时动态配置** — 所有提供商配置均通过 API 在运行时设置，无需重启
+- **配置持久化** — 运行时配置自动保存到 SQLite，重启后自动恢复，无需重复配置
 - **长消息自动分块** — 超长回复自动按段落切分，附带上下文锚点
 - **记忆关联拓扑图** — 基于"共激活"原理的被动学习系统，搜索时自动建立关联，激活相关记忆
 - **向量搜索 + Rerank** — 余弦相似度搜索 + 重排序 + 附近消息检索 + 图关联激活
@@ -159,9 +160,29 @@ DELETE /api/v1/chat/{chatId}                        # 删除整个会话数据
 
 ```
 GET   /api/v1/config                    # 获取当前配置
-PATCH /api/v1/config                    # 更新配置
+PATCH /api/v1/config                    # 更新配置（自动持久化）
 POST  /api/v1/config/detect-dimension   # 手动维度检测
 ```
+
+### 图关联管理
+
+```
+GET  /api/v1/chat/{chatId}/graph          # 查看图边列表
+POST /api/v1/chat/{chatId}/graph/weaken   # 削弱指定边
+POST /api/v1/chat/{chatId}/graph/decay    # 手动触发衰减
+```
+
+**削弱边请求体：**
+
+```json
+{
+  "nodeA": "msg1-msg2",
+  "nodeB": "msg3-msg4",
+  "amount": 0.5
+}
+```
+
+- `amount` 可选，默认 `1.0`；权重减至 ≤ 0 时自动删除该边
 
 ---
 
@@ -181,6 +202,7 @@ ws://localhost:23456/ws/embedding
 | `search` | 搜索相似内容（支持 `useGraph`） |
 | `delete` | 删除数据（支持 `windowId` 单条删除） |
 | `config` | 配置管理（get / update / detect-dimension） |
+| `graph` | 图关联管理（get / weaken / decay） |
 | `ping` | 心跳 |
 
 配置更新时自动广播 `config_changed` 事件至所有已连接客户端。
@@ -189,7 +211,7 @@ ws://localhost:23456/ws/embedding
 
 ## ⚙️ 运行时配置
 
-所有配置通过 API 动态设置，无需修改配置文件重启。
+所有配置通过 API 动态设置，无需修改配置文件重启。配置变更自动持久化到 SQLite（`config.db`），重启后自动恢复。
 
 | Key | 说明 |
 |-----|------|
@@ -216,8 +238,11 @@ ws://localhost:23456/ws/embedding
 
 1. **被动学习** — 搜索时，所有向量直接命中的结果自动两两记录为共激活对
 2. **关联激活** — 搜索时根据直接命中节点查询关联记忆，追加到结果中
-3. **自动衰减** — 定时任务（默认每天凌晨 3 点）对所有边权重衰减，剪枝低权重边
-4. **节点清理** — 删除嵌入时自动清理该节点的所有关联边
+3. **自动衰减** — 定时任务（默认每天凌晨 3 点）对所有边权重乘以衰减因子，剪枝低权重边
+4. **手动衰减** — 通过 API 手动触发单个会话的衰减（`POST .../graph/decay`）
+5. **精准削弱** — 通过 API 削弱指定两个节点之间的关联（`POST .../graph/weaken`），减法操作，归零则删边
+6. **图状态查看** — 通过 API 查看指定会话的所有图边和权重（`GET .../graph`）
+7. **节点清理** — 删除嵌入时自动清理该节点的所有关联边
 
 ---
 
