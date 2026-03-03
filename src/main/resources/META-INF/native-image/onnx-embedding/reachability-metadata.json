@@ -1,50 +1,6 @@
 {
   "reflection": [
     {
-      "type": "ai.djl.huggingface.tokenizers.jni.CharSpan",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "int",
-            "int"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "ai.djl.huggingface.tokenizers.jni.CharSpan[]"
-    },
-    {
-      "type": "ai.onnxruntime.OnnxTensor",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "long",
-            "long",
-            "ai.onnxruntime.TensorInfo"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "ai.onnxruntime.TensorInfo",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "long[]",
-            "java.lang.String[]",
-            "int"
-          ]
-        }
-      ]
-    },
-    {
       "type": "boolean"
     },
     {
@@ -68,6 +24,138 @@
     },
     {
       "type": "ch.qos.logback.classic.util.DefaultJoranConfigurator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.fasterxml.jackson.core.JsonGenerator"
+    },
+    {
+      "type": "com.fasterxml.jackson.core.ObjectCodec"
+    },
+    {
+      "type": "com.fasterxml.jackson.core.TreeCodec"
+    },
+    {
+      "type": "com.fasterxml.jackson.core.Versioned"
+    },
+    {
+      "type": "com.fasterxml.jackson.databind.ObjectMapper"
+    },
+    {
+      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.fasterxml.jackson.dataformat.cbor.CBORFactory"
+    },
+    {
+      "type": "com.fasterxml.jackson.dataformat.smile.SmileFactory"
+    },
+    {
+      "type": "com.fasterxml.jackson.dataformat.xml.XmlMapper"
+    },
+    {
+      "type": "com.fasterxml.jackson.dataformat.yaml.YAMLFactory"
+    },
+    {
+      "type": "com.google.gson.Gson"
+    },
+    {
+      "type": "com.rometools.rome.feed.WireFeed"
+    },
+    {
+      "type": "com.sun.crypto.provider.AESCipher$General",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.ARCFOURCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DESCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DESedeCipher",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.DHParameters",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.TlsKeyMaterialGenerator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.TlsMasterSecretGenerator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.sun.crypto.provider.TlsPrfGenerator$V12",
       "methods": [
         {
           "name": "<init>",
@@ -127,6 +215,10 @@
           "parameterTypes": []
         },
         {
+          "name": "getGraph",
+          "parameterTypes": []
+        },
+        {
           "name": "getSlidingWindow",
           "parameterTypes": []
         },
@@ -138,6 +230,12 @@
           "name": "setChunk",
           "parameterTypes": [
             "com.synapse.embedding.config.EmbeddingConfig$ChunkConfig"
+          ]
+        },
+        {
+          "name": "setGraph",
+          "parameterTypes": [
+            "com.synapse.embedding.config.EmbeddingConfig$GraphConfig"
           ]
         },
         {
@@ -193,6 +291,47 @@
           "name": "setMaxLength",
           "parameterTypes": [
             "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.synapse.embedding.config.EmbeddingConfig$GraphConfig",
+      "methods": [
+        {
+          "name": "setDecayCron",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "setDecayFactor",
+          "parameterTypes": [
+            "double"
+          ]
+        },
+        {
+          "name": "setEnabled",
+          "parameterTypes": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "setMaxGraphResults",
+          "parameterTypes": [
+            "int"
+          ]
+        },
+        {
+          "name": "setPruneThreshold",
+          "parameterTypes": [
+            "double"
+          ]
+        },
+        {
+          "name": "setQueryThreshold",
+          "parameterTypes": [
+            "double"
           ]
         }
       ]
@@ -346,6 +485,35 @@
       ]
     },
     {
+      "type": "com.synapse.embedding.config.SchedulingConfig"
+    },
+    {
+      "type": "com.synapse.embedding.config.SchedulingConfig$$SpringCGLIB$$0",
+      "fields": [
+        {
+          "name": "$$beanFactory"
+        },
+        {
+          "name": "CGLIB$CALLBACK_FILTER"
+        },
+        {
+          "name": "CGLIB$FACTORY_DATA"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "CGLIB$SET_STATIC_CALLBACKS",
+          "parameterTypes": [
+            "org.springframework.cglib.proxy.Callback[]"
+          ]
+        }
+      ]
+    },
+    {
       "type": "com.synapse.embedding.config.WebSocketConfig"
     },
     {
@@ -384,12 +552,6 @@
           "parameterTypes": [
             "com.synapse.embedding.service.ConfigService"
           ]
-        },
-        {
-          "name": "updateConfig",
-          "parameterTypes": [
-            "java.util.Map"
-          ]
         }
       ]
     },
@@ -402,6 +564,7 @@
             "com.synapse.embedding.service.EmbeddingService",
             "com.synapse.embedding.service.RerankService",
             "com.synapse.embedding.service.VectorStorageService",
+            "com.synapse.embedding.service.MemoryGraphService",
             "com.synapse.embedding.config.EmbeddingConfig"
           ]
         },
@@ -412,21 +575,35 @@
           ]
         },
         {
+          "name": "deleteEmbedding",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String"
+          ]
+        },
+        {
           "name": "embed",
           "parameterTypes": [
             "com.synapse.embedding.model.EmbeddingRequest"
           ]
         },
         {
-          "name": "embedText",
+          "name": "getGraphEdges",
           "parameterTypes": [
-            "java.util.Map"
+            "java.lang.String"
           ]
         },
         {
           "name": "search",
           "parameterTypes": [
             "com.synapse.embedding.model.SearchRequest"
+          ]
+        },
+        {
+          "name": "weakenEdge",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.util.Map"
           ]
         }
       ]
@@ -438,12 +615,6 @@
           "name": "<init>",
           "parameterTypes": [
             "com.synapse.embedding.websocket.EmbeddingWebSocketHandler"
-          ]
-        },
-        {
-          "name": "onConfigChanged",
-          "parameterTypes": [
-            "com.synapse.embedding.event.ConfigChangedEvent"
           ]
         }
       ]
@@ -467,8 +638,8 @@
           "parameterTypes": [
             "java.lang.String",
             "java.util.List",
-            "boolean",
-            "int"
+            "java.lang.Boolean",
+            "java.lang.Integer"
           ]
         }
       ]
@@ -520,9 +691,10 @@
           "parameterTypes": [
             "java.lang.String",
             "java.lang.String",
-            "int",
-            "boolean",
-            "int"
+            "java.lang.Integer",
+            "java.lang.Boolean",
+            "java.lang.Integer",
+            "java.lang.Boolean"
           ]
         }
       ]
@@ -535,7 +707,7 @@
           "parameterTypes": []
         },
         {
-          "name": "isMatch",
+          "name": "matchType",
           "parameterTypes": []
         },
         {
@@ -565,8 +737,28 @@
             "com.synapse.embedding.config.EmbeddingConfig",
             "com.synapse.embedding.service.EmbeddingService",
             "com.synapse.embedding.service.VectorStorageService",
+            "com.synapse.embedding.service.ConfigStorageService",
             "org.springframework.context.ApplicationEventPublisher"
           ]
+        },
+        {
+          "name": "loadPersistedConfig",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.synapse.embedding.service.ConfigStorageService",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "com.synapse.embedding.config.EmbeddingConfig"
+          ]
+        },
+        {
+          "name": "init",
+          "parameterTypes": []
         }
       ]
     },
@@ -580,6 +772,21 @@
             "com.fasterxml.jackson.databind.ObjectMapper",
             "org.springframework.web.client.RestTemplate"
           ]
+        }
+      ]
+    },
+    {
+      "type": "com.synapse.embedding.service.MemoryGraphService",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "com.synapse.embedding.config.EmbeddingConfig"
+          ]
+        },
+        {
+          "name": "init",
+          "parameterTypes": []
         }
       ]
     },
@@ -613,6 +820,18 @@
       ]
     },
     {
+      "type": "com.synapse.embedding.task.GraphDecayTask",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "com.synapse.embedding.service.MemoryGraphService",
+            "com.synapse.embedding.config.EmbeddingConfig"
+          ]
+        }
+      ]
+    },
+    {
       "type": "com.synapse.embedding.websocket.EmbeddingWebSocketHandler",
       "methods": [
         {
@@ -622,6 +841,7 @@
             "com.synapse.embedding.service.EmbeddingService",
             "com.synapse.embedding.service.RerankService",
             "com.synapse.embedding.service.VectorStorageService",
+            "com.synapse.embedding.service.MemoryGraphService",
             "com.synapse.embedding.service.ConfigService",
             "com.synapse.embedding.config.EmbeddingConfig"
           ]
@@ -629,310 +849,7 @@
       ]
     },
     {
-      "type": "com.fasterxml.jackson.core.JsonGenerator"
-    },
-    {
-      "type": "com.fasterxml.jackson.core.ObjectCodec"
-    },
-    {
-      "type": "com.fasterxml.jackson.core.TreeCodec"
-    },
-    {
-      "type": "com.fasterxml.jackson.core.Versioned"
-    },
-    {
-      "type": "com.fasterxml.jackson.databind.ObjectMapper"
-    },
-    {
-      "type": "com.fasterxml.jackson.databind.ext.Java7SupportImpl",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.fasterxml.jackson.dataformat.cbor.CBORFactory"
-    },
-    {
-      "type": "com.fasterxml.jackson.dataformat.smile.SmileFactory"
-    },
-    {
-      "type": "com.fasterxml.jackson.dataformat.xml.XmlMapper"
-    },
-    {
-      "type": "com.fasterxml.jackson.dataformat.yaml.YAMLFactory"
-    },
-    {
-      "type": "com.google.gson.Gson"
-    },
-    {
-      "type": "com.rometools.rome.feed.WireFeed"
-    },
-    {
-      "type": "com.sun.jna.Callback",
-      "jniAccessible": true
-    },
-    {
-      "type": "com.sun.jna.CallbackProxy"
-    },
-    {
-      "type": "com.sun.jna.CallbackReference",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "getCallback",
-          "parameterTypes": [
-            "java.lang.Class",
-            "com.sun.jna.Pointer",
-            "boolean"
-          ]
-        },
-        {
-          "name": "getFunctionPointer",
-          "parameterTypes": [
-            "com.sun.jna.Callback",
-            "boolean"
-          ]
-        },
-        {
-          "name": "getNativeString",
-          "parameterTypes": [
-            "java.lang.Object",
-            "boolean"
-          ]
-        },
-        {
-          "name": "initializeThread",
-          "parameterTypes": [
-            "com.sun.jna.Callback",
-            "com.sun.jna.CallbackReference$AttachOptions"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.CallbackReference$AttachOptions",
-      "jniAccessible": true
-    },
-    {
-      "type": "com.sun.jna.FromNativeConverter",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "nativeType",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.IntegerType",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "value"
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.JNIEnv",
-      "jniAccessible": true
-    },
-    {
-      "type": "com.sun.jna.Native",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "dispose",
-          "parameterTypes": []
-        },
-        {
-          "name": "fromNative",
-          "parameterTypes": [
-            "com.sun.jna.FromNativeConverter",
-            "java.lang.Object",
-            "java.lang.reflect.Method"
-          ]
-        },
-        {
-          "name": "fromNative",
-          "parameterTypes": [
-            "java.lang.Class",
-            "java.lang.Object"
-          ]
-        },
-        {
-          "name": "fromNative",
-          "parameterTypes": [
-            "java.lang.reflect.Method",
-            "java.lang.Object"
-          ]
-        },
-        {
-          "name": "nativeType",
-          "parameterTypes": [
-            "java.lang.Class"
-          ]
-        },
-        {
-          "name": "toNative",
-          "parameterTypes": [
-            "com.sun.jna.ToNativeConverter",
-            "java.lang.Object"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.Native$ffi_callback",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "invoke",
-          "parameterTypes": [
-            "long",
-            "long",
-            "long"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.NativeMapped",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "toNative",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.Pointer",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "peer"
-        }
-      ],
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "long"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.PointerType",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "pointer"
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.Structure",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "memory"
-        },
-        {
-          "name": "typeInfo"
-        }
-      ],
-      "methods": [
-        {
-          "name": "autoRead",
-          "parameterTypes": []
-        },
-        {
-          "name": "autoWrite",
-          "parameterTypes": []
-        },
-        {
-          "name": "getTypeInfo",
-          "parameterTypes": []
-        },
-        {
-          "name": "newInstance",
-          "parameterTypes": [
-            "java.lang.Class",
-            "long"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.Structure$ByValue",
-      "jniAccessible": true
-    },
-    {
-      "type": "com.sun.jna.Structure$FFIType$FFITypes",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "ffi_type_double"
-        },
-        {
-          "name": "ffi_type_float"
-        },
-        {
-          "name": "ffi_type_longdouble"
-        },
-        {
-          "name": "ffi_type_pointer"
-        },
-        {
-          "name": "ffi_type_sint16"
-        },
-        {
-          "name": "ffi_type_sint32"
-        },
-        {
-          "name": "ffi_type_sint64"
-        },
-        {
-          "name": "ffi_type_sint8"
-        },
-        {
-          "name": "ffi_type_uint16"
-        },
-        {
-          "name": "ffi_type_uint32"
-        },
-        {
-          "name": "ffi_type_uint64"
-        },
-        {
-          "name": "ffi_type_uint8"
-        },
-        {
-          "name": "ffi_type_void"
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.WString",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "com.sun.jna.win32.DLLCallback"
-    },
-    {
-      "type": "float[][][]"
+      "type": "double[]"
     },
     {
       "type": "groovy.lang.MetaClass"
@@ -1069,21 +986,7 @@
     {
       "type": "java.lang.Boolean",
       "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        },
-        {
-          "name": "value"
-        }
-      ],
       "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "boolean"
-          ]
-        },
         {
           "name": "getBoolean",
           "parameterTypes": [
@@ -1093,57 +996,10 @@
       ]
     },
     {
-      "type": "java.lang.Byte",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        },
-        {
-          "name": "value"
-        }
-      ],
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "byte"
-          ]
-        }
-      ]
-    },
-    {
       "type": "java.lang.CharSequence[]"
     },
     {
-      "type": "java.lang.Character",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        },
-        {
-          "name": "value"
-        }
-      ],
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "char"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "java.lang.Class",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "getComponentType",
-          "parameterTypes": []
-        }
-      ]
+      "type": "java.lang.Class"
     },
     {
       "type": "java.lang.ClassLoader",
@@ -1163,104 +1019,19 @@
       "type": "java.lang.Comparable[]"
     },
     {
-      "type": "java.lang.Double",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        },
-        {
-          "name": "value"
-        }
-      ],
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "double"
-          ]
-        }
-      ]
-    },
-    {
       "type": "java.lang.Error"
     },
     {
-      "type": "java.lang.Float",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        },
-        {
-          "name": "value"
-        }
-      ],
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "float"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "java.lang.Integer",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        },
-        {
-          "name": "value"
-        }
-      ],
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "int"
-          ]
-        }
-      ]
-    },
-    {
       "type": "java.lang.Iterable"
-    },
-    {
-      "type": "java.lang.Long",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        },
-        {
-          "name": "value"
-        }
-      ],
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "long"
-          ]
-        }
-      ]
     },
     {
       "type": "java.lang.Module"
     },
     {
       "type": "java.lang.Object",
-      "jniAccessible": true,
       "methods": [
         {
           "name": "<init>",
-          "parameterTypes": []
-        },
-        {
-          "name": "toString",
           "parameterTypes": []
         }
       ]
@@ -1275,72 +1046,10 @@
       "type": "java.lang.RuntimeException"
     },
     {
-      "type": "java.lang.Short",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        },
-        {
-          "name": "value"
-        }
-      ],
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "short"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "java.lang.String",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "byte[]"
-          ]
-        },
-        {
-          "name": "<init>",
-          "parameterTypes": [
-            "byte[]",
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "getBytes",
-          "parameterTypes": []
-        },
-        {
-          "name": "getBytes",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        },
-        {
-          "name": "toCharArray",
-          "parameterTypes": []
-        }
-      ]
+      "type": "java.lang.String"
     },
     {
       "type": "java.lang.String[]"
-    },
-    {
-      "type": "java.lang.System",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "getProperty",
-          "parameterTypes": [
-            "java.lang.String"
-          ]
-        }
-      ]
     },
     {
       "type": "java.lang.Thread",
@@ -1380,15 +1089,6 @@
       ]
     },
     {
-      "type": "java.lang.Void",
-      "jniAccessible": true,
-      "fields": [
-        {
-          "name": "TYPE"
-        }
-      ]
-    },
-    {
       "type": "java.lang.WrongThreadException"
     },
     {
@@ -1419,18 +1119,6 @@
       "type": "java.lang.constant.ConstantDesc[]"
     },
     {
-      "type": "java.lang.invoke.MethodHandle"
-    },
-    {
-      "type": "java.lang.invoke.MethodHandles"
-    },
-    {
-      "type": "java.lang.invoke.MethodHandles$Lookup"
-    },
-    {
-      "type": "java.lang.invoke.MethodType"
-    },
-    {
       "type": "java.lang.invoke.TypeDescriptor$OfField"
     },
     {
@@ -1438,24 +1126,6 @@
     },
     {
       "type": "java.lang.reflect.GenericDeclaration"
-    },
-    {
-      "type": "java.lang.reflect.Method",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "getParameterTypes",
-          "parameterTypes": []
-        },
-        {
-          "name": "getReturnType",
-          "parameterTypes": []
-        },
-        {
-          "name": "isDefault",
-          "parameterTypes": []
-        }
-      ]
     },
     {
       "type": "java.lang.reflect.ParameterizedType",
@@ -1499,112 +1169,16 @@
       ]
     },
     {
-      "type": "java.nio.Buffer",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "position",
-          "parameterTypes": []
-        }
-      ]
+      "type": "java.security.AlgorithmParametersSpi"
     },
     {
-      "type": "java.nio.ByteBuffer",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "array",
-          "parameterTypes": []
-        },
-        {
-          "name": "arrayOffset",
-          "parameterTypes": []
-        }
-      ]
+      "type": "java.security.KeyStoreSpi"
     },
     {
-      "type": "java.nio.CharBuffer",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "array",
-          "parameterTypes": []
-        },
-        {
-          "name": "arrayOffset",
-          "parameterTypes": []
-        }
-      ]
+      "type": "java.security.interfaces.RSAPrivateKey"
     },
     {
-      "type": "java.nio.DoubleBuffer",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "array",
-          "parameterTypes": []
-        },
-        {
-          "name": "arrayOffset",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "java.nio.FloatBuffer",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "array",
-          "parameterTypes": []
-        },
-        {
-          "name": "arrayOffset",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "java.nio.IntBuffer",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "array",
-          "parameterTypes": []
-        },
-        {
-          "name": "arrayOffset",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "java.nio.LongBuffer",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "array",
-          "parameterTypes": []
-        },
-        {
-          "name": "arrayOffset",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "java.nio.ShortBuffer",
-      "jniAccessible": true,
-      "methods": [
-        {
-          "name": "array",
-          "parameterTypes": []
-        },
-        {
-          "name": "arrayOffset",
-          "parameterTypes": []
-        }
-      ]
+      "type": "java.security.interfaces.RSAPublicKey"
     },
     {
       "type": "java.sql.Date"
@@ -1695,6 +1269,9 @@
     },
     {
       "type": "java.util.concurrent.Future"
+    },
+    {
+      "type": "java.util.concurrent.ScheduledExecutorService"
     },
     {
       "type": "java.util.logging.LogManager"
@@ -2019,6 +1596,9 @@
       "type": "org.springframework.beans.factory.InitializingBean"
     },
     {
+      "type": "org.springframework.beans.factory.SmartInitializingSingleton"
+    },
+    {
       "type": "org.springframework.beans.factory.annotation.Autowired"
     },
     {
@@ -2046,6 +1626,9 @@
       "type": "org.springframework.beans.factory.config.BeanPostProcessor"
     },
     {
+      "type": "org.springframework.beans.factory.config.DestructionAwareBeanPostProcessor"
+    },
+    {
       "type": "org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor"
     },
     {
@@ -2053,6 +1636,9 @@
     },
     {
       "type": "org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor"
+    },
+    {
+      "type": "org.springframework.beans.factory.support.MergedBeanDefinitionPostProcessor"
     },
     {
       "type": "org.springframework.beans.factory.support.NullBean"
@@ -2068,6 +1654,9 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "org.springframework.boot.LazyInitializationExcludeFilter"
     },
     {
       "type": "org.springframework.boot.SpringBootConfiguration"
@@ -2477,6 +2066,9 @@
       "type": "org.springframework.boot.autoconfigure.ssl.SslPropertiesBundleRegistrar"
     },
     {
+      "type": "org.springframework.boot.autoconfigure.task.ScheduledBeanLazyInitializationExcludeFilter"
+    },
+    {
       "type": "org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration",
       "methods": [
         {
@@ -2592,6 +2184,10 @@
         {
           "name": "<init>",
           "parameterTypes": []
+        },
+        {
+          "name": "scheduledBeanLazyInitializationExcludeFilter",
+          "parameterTypes": []
         }
       ]
     },
@@ -2613,7 +2209,19 @@
       ]
     },
     {
-      "type": "org.springframework.boot.autoconfigure.task.TaskSchedulingConfigurations$TaskSchedulerConfiguration"
+      "type": "org.springframework.boot.autoconfigure.task.TaskSchedulingConfigurations$TaskSchedulerConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "taskSchedulerVirtualThreads",
+          "parameterTypes": [
+            "org.springframework.boot.task.SimpleAsyncTaskSchedulerBuilder"
+          ]
+        }
+      ]
     },
     {
       "type": "org.springframework.boot.autoconfigure.task.TaskSchedulingConfigurations$ThreadPoolTaskSchedulerBuilderConfiguration",
@@ -4233,6 +3841,9 @@
       "type": "org.springframework.messaging.simp.config.AbstractMessageBrokerConfiguration"
     },
     {
+      "type": "org.springframework.scheduling.TaskScheduler"
+    },
+    {
       "type": "org.springframework.scheduling.annotation.AbstractAsyncConfiguration",
       "methods": [
         {
@@ -4265,6 +3876,9 @@
       "type": "org.springframework.scheduling.annotation.EnableAsync"
     },
     {
+      "type": "org.springframework.scheduling.annotation.EnableScheduling"
+    },
+    {
       "type": "org.springframework.scheduling.annotation.ProxyAsyncConfiguration",
       "methods": [
         {
@@ -4278,10 +3892,38 @@
       ]
     },
     {
+      "type": "org.springframework.scheduling.annotation.Scheduled"
+    },
+    {
+      "type": "org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor"
+    },
+    {
+      "type": "org.springframework.scheduling.annotation.Schedules"
+    },
+    {
+      "type": "org.springframework.scheduling.annotation.SchedulingConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "scheduledAnnotationProcessor",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler"
+    },
+    {
       "type": "org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
     },
     {
       "type": "org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler"
+    },
+    {
+      "type": "org.springframework.scheduling.config.ScheduledTaskHolder"
     },
     {
       "type": "org.springframework.stereotype.Component"
@@ -4405,6 +4047,9 @@
     },
     {
       "type": "org.springframework.web.filter.RequestContextFilter"
+    },
+    {
+      "type": "org.springframework.web.method.annotation.ExceptionHandlerMethodResolver"
     },
     {
       "type": "org.springframework.web.method.support.CompositeUriComponentsContributor"
@@ -4987,6 +4632,24 @@
       ]
     },
     {
+      "type": "sun.security.pkcs12.PKCS12KeyStore",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "sun.security.provider.DRBG",
       "methods": [
         {
@@ -4994,6 +4657,42 @@
           "parameterTypes": [
             "java.security.SecureRandomParameters"
           ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.DSA$SHA224withDSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.DSA$SHA256withDSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.JavaKeyStore$DualFormatJKS",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.JavaKeyStore$JKS",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
         }
       ]
     },
@@ -5007,11 +4706,260 @@
       ]
     },
     {
+      "type": "sun.security.provider.SHA2$SHA224",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "sun.security.provider.SHA2$SHA256",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.SHA5$SHA384",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.SHA5$SHA512",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.X509Factory",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.provider.certpath.PKIXCertPathValidator",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.PSSParameters",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSAKeyFactory$Legacy",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSAPSSSignature",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSASignature$SHA224withRSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSASignature$SHA256withRSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.ssl.KeyManagerFactoryImpl$SunX509",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.ssl.SSLContextImpl$DefaultSSLContext",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.AuthorityInfoAccessExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.AuthorityKeyIdentifierExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.BasicConstraintsExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.CRLDistributionPointsExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.CertificatePoliciesExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.ExtendedKeyUsageExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.KeyUsageExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.NetscapeCertTypeExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.PrivateKeyUsageExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.SubjectAlternativeNameExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "sun.security.x509.SubjectKeyIdentifierExtension",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.Boolean",
+            "java.lang.Object"
+          ]
         }
       ]
     },
@@ -5083,13 +5031,6 @@
     },
     {
       "type": "tools.jackson.dataformat.yaml.YAMLMapper"
-    },
-    {
-      "type": {
-        "proxy": [
-          "ai.djl.util.cuda.CudaLibrary"
-        ]
-      }
     },
     {
       "type": {
@@ -5246,15 +5187,6 @@
       "glob": "META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.replacements"
     },
     {
-      "glob": "ai/onnxruntime/native/win-x64/onnxruntime.dll"
-    },
-    {
-      "glob": "ai/onnxruntime/native/win-x64/onnxruntime4j_jni.dll"
-    },
-    {
-      "glob": "ai/onnxruntime/native/win-x64/onnxruntime_providers_shared.dll"
-    },
-    {
       "glob": "application-default.properties"
     },
     {
@@ -5282,12 +5214,6 @@
       "glob": "banner.txt"
     },
     {
-      "glob": "bge-small-zh-v1.5-tokenizer.json"
-    },
-    {
-      "glob": "bge-small-zh-v1.5.onnx"
-    },
-    {
       "glob": "com/synapse/embedding"
     },
     {
@@ -5295,6 +5221,9 @@
     },
     {
       "glob": "com/synapse/embedding/config/EmbeddingConfig$ChunkConfig.class"
+    },
+    {
+      "glob": "com/synapse/embedding/config/EmbeddingConfig$GraphConfig.class"
     },
     {
       "glob": "com/synapse/embedding/config/EmbeddingConfig$ProviderConfig.class"
@@ -5315,6 +5244,9 @@
       "glob": "com/synapse/embedding/config/JacksonConfig.class"
     },
     {
+      "glob": "com/synapse/embedding/config/SchedulingConfig.class"
+    },
+    {
       "glob": "com/synapse/embedding/config/WebSocketConfig.class"
     },
     {
@@ -5330,10 +5262,16 @@
       "glob": "com/synapse/embedding/service/ConfigService.class"
     },
     {
+      "glob": "com/synapse/embedding/service/ConfigStorageService.class"
+    },
+    {
       "glob": "com/synapse/embedding/service/EmbeddingService$Chunk.class"
     },
     {
       "glob": "com/synapse/embedding/service/EmbeddingService.class"
+    },
+    {
+      "glob": "com/synapse/embedding/service/MemoryGraphService.class"
     },
     {
       "glob": "com/synapse/embedding/service/RerankService.class"
@@ -5342,10 +5280,10 @@
       "glob": "com/synapse/embedding/service/VectorStorageService.class"
     },
     {
-      "glob": "com/synapse/embedding/websocket/EmbeddingWebSocketHandler.class"
+      "glob": "com/synapse/embedding/task/GraphDecayTask.class"
     },
     {
-      "glob": "com/sun/jna/win32-x86-64/jnidispatch.dll"
+      "glob": "com/synapse/embedding/websocket/EmbeddingWebSocketHandler.class"
     },
     {
       "glob": "commons-logging.properties"
@@ -5445,9 +5383,6 @@
     },
     {
       "glob": "messages.properties"
-    },
-    {
-      "glob": "native/lib/tokenizers.properties"
     },
     {
       "glob": "org/apache/catalina/authenticator/LocalStrings.properties"
@@ -6353,7 +6288,13 @@
       "glob": "org/springframework/scheduling/annotation/EnableAsync.class"
     },
     {
+      "glob": "org/springframework/scheduling/annotation/EnableScheduling.class"
+    },
+    {
       "glob": "org/springframework/scheduling/annotation/ProxyAsyncConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/scheduling/annotation/SchedulingConfiguration.class"
     },
     {
       "glob": "org/springframework/web/bind/annotation/CrossOrigin.class"
@@ -6428,7 +6369,16 @@
       "glob": "static/index.html"
     },
     {
-      "glob": "tokenizers-engine.properties"
+      "module": "java.base",
+      "glob": "jdk/internal/icu/impl/data/icudt76b/nfkc.nrm"
+    },
+    {
+      "module": "java.base",
+      "glob": "jdk/internal/icu/impl/data/icudt76b/uprops.icu"
+    },
+    {
+      "module": "java.base",
+      "glob": "sun/net/idn/uidna.spp"
     },
     {
       "bundle": "jakarta.servlet.LocalStrings"
