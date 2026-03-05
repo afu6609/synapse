@@ -37,3 +37,7 @@ embedding:
   # Provider 和 Rerank 通过运行时 API 配置:
   #   provider.type / provider.baseUrl / provider.model / provider.apiKey
   #   rerank.type / rerank.baseUrl / rerank.model / rerank.apiKey
+
+  # 管理后台配置
+  admin:
+    password: ""  # 为空则无需密码

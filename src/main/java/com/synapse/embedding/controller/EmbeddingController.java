@@ -131,9 +131,13 @@ public class EmbeddingController {
             results = applyGraphLogic(request.chatId(), results, request.useGraph());
 
             return ResponseEntity.ok(results);
+        } catch (IllegalArgumentException e) {
+            log.warn("Search failed due to argument error: {}", e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "维度不一致：当前嵌入模型的向量维度与已存储的向量维度不同，请清空历史向量后重新嵌入。(" + e.getMessage() + ")"));
         } catch (Exception e) {
             log.error("Search failed", e);
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -191,9 +195,20 @@ public class EmbeddingController {
         return results;
     }
 
+    @GetMapping("/chat/{chatId}/embeddings")
+    public ResponseEntity<?> listEmbeddings(@PathVariable("chatId") String chatId) {
+        try {
+            List<Map<String, Object>> embeddings = storageService.listEmbeddings(chatId);
+            return ResponseEntity.ok(Map.of("chatId", chatId, "embeddings", embeddings, "count", embeddings.size()));
+        } catch (Exception e) {
+            log.error("List embeddings failed", e);
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/chat/{chatId}/embedding/{windowId}")
-    public ResponseEntity<Map<String, String>> deleteEmbedding(@PathVariable String chatId,
-            @PathVariable String windowId) {
+    public ResponseEntity<Map<String, String>> deleteEmbedding(@PathVariable("chatId") String chatId,
+            @PathVariable("windowId") String windowId) {
         try {
             boolean deleted = storageService.deleteEmbedding(chatId, windowId);
             if (deleted) {
@@ -210,7 +225,7 @@ public class EmbeddingController {
     }
 
     @DeleteMapping("/chat/{chatId}")
-    public ResponseEntity<Map<String, String>> deleteChat(@PathVariable String chatId) {
+    public ResponseEntity<Map<String, String>> deleteChat(@PathVariable("chatId") String chatId) {
         try {
             storageService.deleteChat(chatId);
             return ResponseEntity.ok(Map.of("status", "deleted", "chatId", chatId));
@@ -223,13 +238,13 @@ public class EmbeddingController {
     // ========== 图关联管理 ==========
 
     @GetMapping("/chat/{chatId}/graph")
-    public ResponseEntity<?> getGraphEdges(@PathVariable String chatId) {
+    public ResponseEntity<?> getGraphEdges(@PathVariable("chatId") String chatId) {
         var edges = memoryGraphService.getEdges(chatId);
         return ResponseEntity.ok(Map.of("chatId", chatId, "edges", edges, "count", edges.size()));
     }
 
     @PostMapping("/chat/{chatId}/graph/weaken")
-    public ResponseEntity<?> weakenEdge(@PathVariable String chatId,
+    public ResponseEntity<?> weakenEdge(@PathVariable("chatId") String chatId,
             @RequestBody Map<String, Object> request) {
         String nodeA = (String) request.get("nodeA");
         String nodeB = (String) request.get("nodeB");
@@ -253,7 +268,7 @@ public class EmbeddingController {
     }
 
     @PostMapping("/chat/{chatId}/graph/decay")
-    public ResponseEntity<?> manualDecay(@PathVariable String chatId) {
+    public ResponseEntity<?> manualDecay(@PathVariable("chatId") String chatId) {
         var graphConfig = config.getGraph();
         memoryGraphService.decayAndPrune(chatId, graphConfig.getDecayFactor(), graphConfig.getPruneThreshold());
         return ResponseEntity.ok(Map.of(

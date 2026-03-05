@@ -343,6 +343,25 @@ public class ConfigService {
                 }
                 yield false;
             }
+            // Admin
+            case "admin.password" -> {
+                if (!Objects.equals(config.getAdmin().getPassword(), strVal)) {
+                    config.getAdmin().setPassword(strVal != null ? strVal : "");
+                    yield true;
+                }
+                yield false;
+            }
+            // Detected dimension (persisted)
+            case "detectedDimension" -> {
+                Integer intVal = (strVal != null && !strVal.isBlank())
+                        ? Integer.valueOf(Integer.parseInt(strVal))
+                        : null;
+                if (!Objects.equals(config.getDetectedDimension(), intVal)) {
+                    config.setDetectedDimension(intVal);
+                    yield true;
+                }
+                yield false;
+            }
             default -> {
                 log.warn("Unknown config key: {}", key);
                 yield false;

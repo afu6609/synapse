@@ -102,6 +102,39 @@
                     </buildArgs>
                 </configuration>
             </plugin>
+            <!-- 将 DJL tokenizer native DLL 复制到 target 目录（与 exe 同目录发布给用户） -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-tokenizer-dlls</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <!-- Windows: tokenizers.dll 等依赖 -->
+                                <copy todir="${project.build.directory}" failonerror="false" quiet="true">
+                                    <fileset dir="${user.home}/.djl.ai/tokenizers" includes="**/*-win-x86_64/**/*.dll">
+                                        <filename name="**/*.dll"/>
+                                    </fileset>
+                                    <mapper type="flatten"/>
+                                </copy>
+                                <!-- Linux: libtokenizers.so 等依赖 -->
+                                <copy todir="${project.build.directory}" failonerror="false" quiet="true">
+                                    <fileset dir="${user.home}/.djl.ai/tokenizers" includes="**/*-linux-x86_64/**/*.so">
+                                        <filename name="**/*.so"/>
+                                    </fileset>
+                                    <mapper type="flatten"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse Admin</title>
+    <meta name="description" content="Synapse vector embedding service management console">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen hidden">
+        <div class="login-card">
+            <div class="login-logo">
+                <svg viewBox="0 0 48 48" width="48" height="48">
+                    <circle cx="24" cy="24" r="20" fill="none" stroke="url(#grad)" stroke-width="2" />
+                    <circle cx="24" cy="14" r="3" fill="#a78bfa" />
+                    <circle cx="15" cy="30" r="3" fill="#60a5fa" />
+                    <circle cx="33" cy="30" r="3" fill="#34d399" />
+                    <line x1="24" y1="14" x2="15" y2="30" stroke="#a78bfa55" stroke-width="1.5" />
+                    <line x1="24" y1="14" x2="33" y2="30" stroke="#60a5fa55" stroke-width="1.5" />
+                    <line x1="15" y1="30" x2="33" y2="30" stroke="#34d39955" stroke-width="1.5" />
+                    <defs>
+                        <linearGradient id="grad" x1="0" y1="0" x2="48" y2="48">
+                            <stop offset="0%" stop-color="#a78bfa" />
+                            <stop offset="100%" stop-color="#60a5fa" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1>Synapse</h1>
+            <p class="login-subtitle" data-i18n="login.subtitle">Management Console</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="password" id="login-password" data-i18n-placeholder="login.password"
+                        placeholder="Password" autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" data-i18n="login.submit">Sign In</button>
+                <p id="login-error" class="login-error hidden"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <svg viewBox="0 0 48 48" width="32" height="32">
+                    <circle cx="24" cy="24" r="20" fill="none" stroke="url(#grad2)" stroke-width="2" />
+                    <circle cx="24" cy="14" r="3" fill="#a78bfa" />
+                    <circle cx="15" cy="30" r="3" fill="#60a5fa" />
+                    <circle cx="33" cy="30" r="3" fill="#34d399" />
+                    <line x1="24" y1="14" x2="15" y2="30" stroke="#a78bfa55" stroke-width="1.5" />
+                    <line x1="24" y1="14" x2="33" y2="30" stroke="#60a5fa55" stroke-width="1.5" />
+                    <line x1="15" y1="30" x2="33" y2="30" stroke="#34d39955" stroke-width="1.5" />
+                    <defs>
+                        <linearGradient id="grad2" x1="0" y1="0" x2="48" y2="48">
+                            <stop offset="0%" stop-color="#a78bfa" />
+                            <stop offset="100%" stop-color="#60a5fa" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span class="sidebar-title">Synapse</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                    <span data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+                <a href="#config" class="nav-item" data-page="config">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3" />
+                        <path
+                            d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+                    </svg>
+                    <span data-i18n="nav.config">Config</span>
+                </a>
+                <a href="#graph" class="nav-item" data-page="graph">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="6" cy="6" r="3" />
+                        <circle cx="18" cy="6" r="3" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="18" cy="18" r="3" />
+                        <line x1="6" y1="9" x2="6" y2="15" />
+                        <line x1="18" y1="9" x2="18" y2="15" />
+                        <line x1="9" y1="6" x2="15" y2="6" />
+                        <line x1="9" y1="18" x2="15" y2="18" />
+                    </svg>
+                    <span data-i18n="nav.graph">Graph</span>
+                </a>
+                <a href="#search" class="nav-item" data-page="search">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <span data-i18n="nav.search">Search</span>
+                </a>
+                <a href="#embed" class="nav-item" data-page="embed">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                    <span data-i18n="nav.embed">Embed Test</span>
+                </a>
+                <a href="#memory" class="nav-item" data-page="memory">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 7V4a2 2 0 012-2h8.5L20 7.5V20a2 2 0 01-2 2H4" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <path d="M2 15h10M9 12l3 3-3 3" />
+                    </svg>
+                    <span data-i18n="nav.memory">Memory</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="btn-lang" class="btn btn-ghost btn-sm" title="Switch Language">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path
+                            d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z" />
+                    </svg>
+                    <span id="lang-label">EN</span>
+                </button>
+                <button id="btn-logout" class="btn btn-ghost btn-sm" data-i18n="nav.logout" title="Logout">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="content">
+            <!-- Dashboard -->
+            <section id="page-dashboard" class="page">
+                <h2 data-i18n="dashboard.title">Dashboard</h2>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="--accent: #a78bfa">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 6v6l4 2" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label" data-i18n="dashboard.status">Status</span>
+                            <span class="stat-value" id="stat-status">—</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="--accent: #60a5fa">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label" data-i18n="dashboard.dimension">Dimension</span>
+                            <span class="stat-value" id="stat-dimension">—</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="--accent: #34d399">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label" data-i18n="dashboard.totalChats">Chats</span>
+                            <span class="stat-value" id="stat-chats">—</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="--accent: #f472b6">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                                <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label" data-i18n="dashboard.totalEmbeddings">Embeddings</span>
+                            <span class="stat-value" id="stat-embeddings">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Provider Cards -->
+                <div class="card-row">
+                    <div class="card">
+                        <h3 data-i18n="dashboard.embeddingProvider">Embedding Provider</h3>
+                        <div id="provider-info" class="provider-info">—</div>
+                    </div>
+                    <div class="card">
+                        <h3 data-i18n="dashboard.rerankProvider">Rerank Provider</h3>
+                        <div id="rerank-info" class="provider-info">—</div>
+                    </div>
+                </div>
+
+                <!-- Chat Table -->
+                <div class="card">
+                    <h3 data-i18n="dashboard.chatList">Chat List</h3>
+                    <div class="table-wrapper">
+                        <table id="chat-table">
+                            <thead>
+                                <tr>
+                                    <th>Chat ID</th>
+                                    <th data-i18n="dashboard.embeddings">Embeddings</th>
+                                    <th data-i18n="dashboard.graphEdges">Graph Edges</th>
+                                </tr>
+                            </thead>
+                            <tbody id="chat-table-body">
+                                <tr>
+                                    <td colspan="3" class="empty" data-i18n="common.noData">No data</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Config -->
+            <section id="page-config" class="page hidden">
+                <h2 data-i18n="config.title">Configuration</h2>
+                <div id="config-form-container"></div>
+            </section>
+
+            <!-- Graph -->
+            <section id="page-graph" class="page hidden">
+                <h2 data-i18n="graph.title">Memory Graph</h2>
+                <div class="graph-controls">
+                    <div class="form-group form-inline">
+                        <label data-i18n="graph.selectChat">Select Chat</label>
+                        <select id="graph-chat-select" class="form-select">
+                            <option value="" data-i18n="graph.noChats">No chats available</option>
+                        </select>
+                        <button id="btn-load-graph" class="btn btn-primary btn-sm" data-i18n="graph.load">Load</button>
+                        <button id="btn-decay" class="btn btn-outline btn-sm" data-i18n="graph.decay">Decay</button>
+                    </div>
+                </div>
+                <div class="graph-layout">
+                    <div id="graph-container" class="graph-canvas">
+                        <p class="graph-placeholder" data-i18n="graph.placeholder">Select a chat and click Load to
+                            visualize the memory graph</p>
+                    </div>
+                    <div id="graph-edge-panel" class="graph-edge-panel hidden">
+                        <h4 data-i18n="graph.edgeDetails">Edge Details</h4>
+                        <div id="edge-detail-content"></div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 1rem">
+                    <h3 data-i18n="graph.edgeList">Edge List</h3>
+                    <div class="table-wrapper">
+                        <table id="edge-table">
+                            <thead>
+                                <tr>
+                                    <th>Node A</th>
+                                    <th>Node B</th>
+                                    <th data-i18n="graph.weight">Weight</th>
+                                    <th data-i18n="graph.actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="edge-table-body">
+                                <tr>
+                                    <td colspan="4" class="empty" data-i18n="common.noData">No data</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Search Test -->
+            <section id="page-search" class="page hidden">
+                <h2 data-i18n="search.title">Search Test</h2>
+                <div class="card">
+                    <div class="search-form">
+                        <div class="form-row">
+                            <div class="form-group flex-2">
+                                <label data-i18n="search.query">Query</label>
+                                <input type="text" id="search-query" data-i18n-placeholder="search.queryPlaceholder"
+                                    placeholder="Enter search text...">
+                            </div>
+                            <div class="form-group flex-1">
+                                <label>Chat ID</label>
+                                <select id="search-chat-select" class="form-select">
+                                    <option value="">—</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Top K</label>
+                                <input type="number" id="search-topk" value="5" min="1" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label data-i18n="search.nearby">Nearby</label>
+                                <input type="number" id="search-nearby" value="0" min="0" max="10">
+                            </div>
+                            <div class="form-group form-check-group">
+                                <label class="check-label">
+                                    <input type="checkbox" id="search-use-graph"> <span data-i18n="search.useGraph">Use
+                                        Graph</span>
+                                </label>
+                                <label class="check-label">
+                                    <input type="checkbox" id="search-use-rerank"> <span
+                                        data-i18n="search.useRerank">Use Rerank</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <button id="btn-search" class="btn btn-primary" data-i18n="search.run">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="search-results" class="search-results"></div>
+            </section>
+
+            <!-- Embed Test -->
+            <section id="page-embed" class="page hidden">
+                <h2 data-i18n="embed.title">Embedding Test</h2>
+
+                <!-- Single Text Vectorize -->
+                <div class="card">
+                    <h3 data-i18n="embed.singleTitle">Quick Text Vectorize</h3>
+                    <div class="form-group">
+                        <textarea id="embed-input" rows="3" style="width:100%;resize:vertical"
+                            data-i18n-placeholder="embed.inputPlaceholder"
+                            placeholder="Enter text to vectorize..."></textarea>
+                    </div>
+                    <button id="btn-embed-text" class="btn btn-primary btn-sm" data-i18n="embed.runSingle">Vectorize
+                        Text</button>
+                </div>
+                <div id="embed-text-result" style="margin-top:0.75rem"></div>
+
+                <!-- Multi-Message Embed -->
+                <div class="card" style="margin-top:1rem">
+                    <h3 data-i18n="embed.multiTitle">Message Vectorization</h3>
+                    <div class="form-row" style="margin-bottom:1rem">
+                        <div class="form-group flex-1">
+                            <label>Chat ID</label>
+                            <input type="text" id="embed-chat-id" value="test-embed" placeholder="Chat ID">
+                        </div>
+                        <div class="form-group form-check-group" style="padding-bottom:0.5rem">
+                            <label class="check-label">
+                                <input type="checkbox" id="embed-sliding-window" checked> <span
+                                    data-i18n="embed.slidingWindow">Sliding Window</span>
+                            </label>
+                        </div>
+                        <div class="form-group" style="max-width:120px">
+                            <label data-i18n="embed.windowSize">Window Size</label>
+                            <input type="number" id="embed-window-size" value="2" min="1" max="10">
+                        </div>
+                    </div>
+                    <div id="embed-messages-container">
+                        <!-- Dynamic message rows will be inserted here -->
+                    </div>
+                    <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+                        <button id="btn-add-message" class="btn btn-outline btn-sm" data-i18n="embed.addMessage">+ Add
+                            Message</button>
+                        <button id="btn-embed-messages" class="btn btn-primary" data-i18n="embed.runMulti">Vectorize
+                            Messages</button>
+                    </div>
+                </div>
+                <div id="embed-messages-result" style="margin-top:0.75rem"></div>
+            </section>
+
+            <!-- Memory Management -->
+            <section id="page-memory" class="page hidden">
+                <h2 data-i18n="memory.title">Memory Management</h2>
+                <div class="memory-controls">
+                    <div class="form-group form-inline">
+                        <label data-i18n="memory.selectChat">Select Chat</label>
+                        <select id="memory-chat-select" class="form-select">
+                            <option value="" data-i18n="graph.noChats">No chats available</option>
+                        </select>
+                        <button id="btn-load-memory" class="btn btn-primary btn-sm"
+                            data-i18n="memory.load">Load</button>
+                        <button id="btn-delete-chat" class="btn btn-danger btn-sm" data-i18n="memory.deleteChat">Delete
+                            Chat</button>
+                    </div>
+                </div>
+                <div id="memory-stats" class="memory-stats" style="margin-bottom:1rem"></div>
+                <div id="memory-list" class="memory-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

@@ -63,9 +63,9 @@ public class VectorStorageService {
             initializeDatabase(conn);
 
             String insertSql = """
-                INSERT OR REPLACE INTO embeddings (window_id, content, message_ids, vector_file, message_index)
-                VALUES (?, ?, ?, ?, ?)
-            """;
+                        INSERT OR REPLACE INTO embeddings (window_id, content, message_ids, vector_file, message_index)
+                        VALUES (?, ?, ?, ?, ?)
+                    """;
 
             try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
                 for (EmbeddingResult result : results) {
@@ -107,7 +107,7 @@ public class VectorStorageService {
             String selectSql = "SELECT window_id, content, message_ids, vector_file, message_index FROM embeddings";
 
             try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(selectSql)) {
+                    ResultSet rs = stmt.executeQuery(selectSql)) {
 
                 while (rs.next()) {
                     String windowId = rs.getString("window_id");
@@ -125,8 +125,7 @@ public class VectorStorageService {
                             similarity,
                             Arrays.asList(messageIds.split(",")),
                             messageIndex,
-                            "vector"
-                    ));
+                            "vector"));
                 }
             }
         }
@@ -139,7 +138,8 @@ public class VectorStorageService {
     /**
      * 搜索相似向量并附带附近消息
      */
-    public List<SearchResult> searchWithNearby(String chatId, String query, int topK, int nearbyCount) throws Exception {
+    public List<SearchResult> searchWithNearby(String chatId, String query, int topK, int nearbyCount)
+            throws Exception {
         List<SearchResult> matched = search(chatId, query, topK);
         return addNearby(chatId, matched, nearbyCount);
     }
@@ -153,7 +153,8 @@ public class VectorStorageService {
         }
 
         int radius = nearbyCount / 2;
-        if (radius <= 0) radius = 1;
+        if (radius <= 0)
+            radius = 1;
 
         Set<Integer> matchedIndices = matched.stream()
                 .map(SearchResult::messageIndex)
@@ -162,7 +163,8 @@ public class VectorStorageService {
         Set<Integer> nearbyIndices = new LinkedHashSet<>();
         for (int idx : matchedIndices) {
             for (int offset = -radius; offset <= radius; offset++) {
-                if (offset == 0) continue;
+                if (offset == 0)
+                    continue;
                 int nearbyIdx = idx + offset;
                 if (nearbyIdx >= 0 && !matchedIndices.contains(nearbyIdx)) {
                     nearbyIndices.add(nearbyIdx);
@@ -197,10 +199,11 @@ public class VectorStorageService {
         List<SearchResult> results = new ArrayList<>();
 
         String placeholders = indices.stream().map(i -> "?").collect(Collectors.joining(","));
-        String sql = "SELECT window_id, content, message_ids, message_index FROM embeddings WHERE message_index IN (" + placeholders + ")";
+        String sql = "SELECT window_id, content, message_ids, message_index FROM embeddings WHERE message_index IN ("
+                + placeholders + ")";
 
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             int paramIdx = 1;
             for (int idx : indices) {
@@ -215,8 +218,7 @@ public class VectorStorageService {
                             0.0, // 附近消息没有相似度分数
                             Arrays.asList(rs.getString("message_ids").split(",")),
                             rs.getInt("message_index"),
-                            "nearby"
-                    ));
+                            "nearby"));
                 }
             }
         }
@@ -227,7 +229,8 @@ public class VectorStorageService {
     /**
      * 根据 windowId 集合从数据库查询（用于图关联结果）
      */
-    public List<SearchResult> fetchByWindowIds(String chatId, Map<String, Double> windowIdScores, String matchType) throws Exception {
+    public List<SearchResult> fetchByWindowIds(String chatId, Map<String, Double> windowIdScores, String matchType)
+            throws Exception {
         Path chatDir = basePath.resolve(chatId);
         Path dbPath = chatDir.resolve("metadata.db");
 
@@ -238,10 +241,11 @@ public class VectorStorageService {
         List<SearchResult> results = new ArrayList<>();
 
         String placeholders = windowIdScores.keySet().stream().map(id -> "?").collect(Collectors.joining(","));
-        String sql = "SELECT window_id, content, message_ids, message_index FROM embeddings WHERE window_id IN (" + placeholders + ")";
+        String sql = "SELECT window_id, content, message_ids, message_index FROM embeddings WHERE window_id IN ("
+                + placeholders + ")";
 
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             int paramIdx = 1;
             for (String id : windowIdScores.keySet()) {
@@ -257,12 +261,40 @@ public class VectorStorageService {
                             windowIdScores.getOrDefault(windowId, 0.0),
                             Arrays.asList(rs.getString("message_ids").split(",")),
                             rs.getInt("message_index"),
-                            matchType
-                    ));
+                            matchType));
                 }
             }
         }
 
+        return results;
+    }
+
+    /**
+     * 列出某个会话的所有嵌入记录（不含向量数据）
+     */
+    public List<Map<String, Object>> listEmbeddings(String chatId) throws Exception {
+        Path chatDir = basePath.resolve(chatId);
+        Path dbPath = chatDir.resolve("metadata.db");
+
+        if (!Files.exists(dbPath)) {
+            return Collections.emptyList();
+        }
+
+        List<Map<String, Object>> results = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(
+                        "SELECT window_id, content, message_ids, message_index, created_at FROM embeddings ORDER BY message_index")) {
+            while (rs.next()) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("windowId", rs.getString("window_id"));
+                row.put("content", rs.getString("content"));
+                row.put("messageIds", rs.getString("message_ids"));
+                row.put("messageIndex", rs.getInt("message_index"));
+                row.put("createdAt", rs.getString("created_at"));
+                results.add(row);
+            }
+        }
         return results;
     }
 
@@ -337,15 +369,15 @@ public class VectorStorageService {
 
     private void initializeDatabase(Connection conn) throws SQLException {
         String createTableSql = """
-            CREATE TABLE IF NOT EXISTS embeddings (
-                window_id TEXT PRIMARY KEY,
-                content TEXT NOT NULL,
-                message_ids TEXT NOT NULL,
-                vector_file TEXT NOT NULL,
-                message_index INTEGER NOT NULL DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """;
+                    CREATE TABLE IF NOT EXISTS embeddings (
+                        window_id TEXT PRIMARY KEY,
+                        content TEXT NOT NULL,
+                        message_ids TEXT NOT NULL,
+                        vector_file TEXT NOT NULL,
+                        message_index INTEGER NOT NULL DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """;
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(createTableSql);
         }

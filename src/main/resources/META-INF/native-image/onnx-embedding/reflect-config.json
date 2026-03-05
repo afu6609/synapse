@@ -39,5 +39,10 @@
     "allDeclaredMethods": true,
     "allDeclaredFields": true,
     "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.synapse.embedding.service.NativeHelper",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
   }
 ]

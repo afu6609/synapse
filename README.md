@@ -17,6 +17,7 @@
 - **向量搜索 + Rerank** — 余弦相似度搜索 + 重排序 + 附近消息检索 + 图关联激活
 - **单条精确删除** — 按 windowId 精确删除嵌入，自动清理图中关联边
 - **双协议支持** — REST API 和 WebSocket 功能完全对等
+- **Web 管理界面** — 内置可视化管理面板，支持配置管理、图关联可视化、搜索测试
 - **GraalVM Native Image** — 支持原生镜像编译，启动时间 <1s，内存占用 <50MB
 
 ---
@@ -35,7 +36,21 @@
 mvn spring-boot:run
 ```
 
-服务默认端口 `23456`，启动后无需预先配置 provider，可通过 API 动态配置。
+服务默认端口 `23456`，启动后无需预先配置 provider，可通过 API 或管理界面动态配置。
+
+### 🖥️ Web 管理界面
+
+启动后访问：
+
+```
+http://localhost:23456/admin/
+```
+
+内置 Web 管理界面提供：
+- **配置管理** — 图形化设置 Embedding/Rerank 提供商、一键保存并自动检测维度
+- **记忆图可视化** — 使用 vis.js 渲染图网络，支持点击削弱指定关联边
+- **向量搜索测试** — 在线测试搜索效果，支持图关联和 Rerank 选项
+- **嵌入测试** — 单条文本或多条消息批量嵌入测试
 
 ### 配置 Embedding 提供商
 
@@ -149,6 +164,8 @@ POST /api/v1/search
 | `matchType: "nearby"` | 附近上下文 |
 | `matchType: "graph"` | 图关联激活 |
 
+> ⚠️ **注意**：切换嵌入模型后新旧向量维度不同时，搜索接口返回 `500` 并提示"维度不一致"。需清空旧向量（`DELETE /api/v1/chat/{chatId}`）再重新嵌入。
+
 ### 删除操作
 
 ```
@@ -160,8 +177,8 @@ DELETE /api/v1/chat/{chatId}                        # 删除整个会话数据
 
 ```
 GET   /api/v1/config                    # 获取当前配置
-PATCH /api/v1/config                    # 更新配置（自动持久化）
-POST  /api/v1/config/detect-dimension   # 手动维度检测
+PATCH /api/v1/config                    # 更新配置（自动持久化，provider 变更后自动检测维度）
+POST  /api/v1/config/detect-dimension   # 手动触发维度检测
 ```
 
 ### 图关联管理
@@ -241,26 +258,48 @@ ws://localhost:23456/ws/embedding
 3. **自动衰减** — 定时任务（默认每天凌晨 3 点）对所有边权重乘以衰减因子，剪枝低权重边
 4. **手动衰减** — 通过 API 手动触发单个会话的衰减（`POST .../graph/decay`）
 5. **精准削弱** — 通过 API 削弱指定两个节点之间的关联（`POST .../graph/weaken`），减法操作，归零则删边
-6. **图状态查看** — 通过 API 查看指定会话的所有图边和权重（`GET .../graph`）
+6. **图状态查看** — 通过管理界面或 API 查看指定会话的所有图边和权重
 7. **节点清理** — 删除嵌入时自动清理该节点的所有关联边
 
 ---
 
 ## 🏗️ GraalVM Native Image
 
-### 构建
+### 普通构建
 
 ```bash
-mvn -Pnative native:compile
+mvn -Pnative native:compile -DskipTests
 ```
 
-构建产物在 `target/` 目录下，可直接运行：
+### ⚠️ 使用本地 ONNX 模型时（bge-small-zh-v15）
+
+如果使用 `provider.type=local`，打包前需在目标机器上**先跑一次 JVM 版本**，让 DJL 完成原生库的首次下载缓存：
 
 ```bash
-./target/synapse
+# 第一步：打 JAR 并运行，触发 DJL 下载原生库到 ~/.djl.ai/
+mvn package -DskipTests
+java -jar target/synapse-0.1.0.jar
+# 看到 "Started SynapseApplication" 后 Ctrl+C 停止
+
+# 第二步：打 Native Image（构建时会自动从 ~/.djl.ai/ 复制原生库到 target/）
+mvn -Pnative native:compile -DskipTests
 ```
 
-### 排查 Native Image 问题
+> 每台**新机器**只需做一次，之后每次 `native:compile` 可直接执行。
+> 仅使用外部 API 嵌入时无需此步骤。
+
+### 发布所需文件
+
+| 平台 | 必须文件 |
+|------|----------|
+| **Windows**（使用本地模型） | `synapse.exe` + `tokenizers.dll` + `libwinpthread-1.dll` + `libgcc_s_seh-1.dll` + `libstdc++-6.dll` |
+| **Windows**（仅 API 模式） | `synapse.exe` |
+| **Linux**（使用本地模型） | `synapse` + `libtokenizers.so` |
+| **Linux**（仅 API 模式） | `synapse` |
+
+运行时自动创建 `data/` 目录（SQLite 配置库 + 向量文件）。
+
+### 生成反射配置（排查问题）
 
 ```bash
 java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image \

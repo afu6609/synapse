@@ -39,12 +39,12 @@ public class EmbeddingService {
     }
 
     private record Chunk(
-        int index,
-        int originalMessageIndex,
-        String id,
-        String content,
-        String role
-    ) {}
+            int index,
+            int originalMessageIndex,
+            String id,
+            String content,
+            String role) {
+    }
 
     public List<EmbeddingResult> embedWithSlidingWindow(String chatId, List<Message> messages, int windowSize) {
         List<Chunk> chunks = chunkMessages(messages);
@@ -135,7 +135,8 @@ public class EmbeddingService {
         StringBuilder current = new StringBuilder();
 
         for (String paragraph : paragraphs) {
-            if (paragraph.isEmpty()) continue;
+            if (paragraph.isEmpty())
+                continue;
 
             if (paragraph.length() > maxLength) {
                 // Flush current buffer first
@@ -216,8 +217,7 @@ public class EmbeddingService {
         Map<String, Object> requestBody = Map.of(
                 "model", provider.getModel(),
                 "input", text,
-                "encoding_format", "float"
-        );
+                "encoding_format", "float");
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -259,6 +259,8 @@ public class EmbeddingService {
 
     private EmbeddingModel createLocalModel(String modelName) {
         log.info("Loading local embedding model: {}", modelName);
+        // 让 DJL HuggingFace tokenizer 使用我们的拦截器加载 Native API
+        System.setProperty("ai.djl.huggingface.native_helper", "com.synapse.embedding.service.NativeHelper");
         return switch (modelName) {
             case "bge-small-zh-v15" -> new BgeSmallZhV15EmbeddingModel();
             default -> throw new IllegalArgumentException("Unknown local model: " + modelName);
