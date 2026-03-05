@@ -19,6 +19,18 @@ public class NativeHelper {
         File file = new File(path);
         String name = file.getName();
 
+        // 优先尝试直接按绝对路径加载（适合普通 jar 包在 Linux 等环境下运行，直接加载 DJL 提取出的缓存文件）
+        try {
+            if (file.exists() && file.isAbsolute()) {
+                System.load(path);
+                log.info("Successfully loaded library via System.load: {}", path);
+                return;
+            }
+        } catch (Throwable t) {
+            log.warn("Failed to load via strict absolute path {}. Fallback to loadLibrary. Message: {}", path,
+                    t.getMessage());
+        }
+
         // 移除扩展名和前缀（Windows 上的 tokenizers.dll 不带 lib，而 Linux 带有 lib 前缀等）
         if (name.endsWith(".dll")) {
             name = name.substring(0, name.length() - 4);
